@@ -6,10 +6,12 @@ ra_query (const char *path)
 {
     ra_t a;
     int j, fd;
+    uint64_t magic;
     printf("---\nname: %s\n", path);
     fd = open(path, O_RDONLY);
     if (fd == -1)
         err(errno, "unable to open output file for writing");
+    read(fd, &magic, sizeof(uint64_t));
     read(fd, &(a.flags), sizeof(uint64_t));
     read(fd, &(a.eltype), sizeof(uint64_t));
     read(fd, &(a.elbyte), sizeof(uint64_t));
@@ -32,10 +34,11 @@ int
 ra_read (ra_t *a, const char *path)
 {
     int fd;
-    uint64_t bytestoread, bytesleft;
+    uint64_t bytestoread, bytesleft, magic;
     fd = open(path, O_RDONLY);
     if (fd == -1)
         err(errno, "unable to open output file for writing");
+    read(fd, &magic, sizeof(uint64_t));
     read(fd, &(a->flags), sizeof(uint64_t));
     read(fd, &(a->eltype), sizeof(uint64_t));
     read(fd, &(a->elbyte), sizeof(uint64_t));
@@ -71,6 +74,7 @@ ra_write (ra_t *a, const char *path)
     if (fd == -1)
         err(errno, "unable to open output file for writing");
     /* write the easy stuff */
+    write(fd, &RA_MAGIC_NUMBER, sizeof(uint64_t));
     write(fd, &(a->flags), sizeof(uint64_t));
     write(fd, &(a->eltype), sizeof(uint64_t));
     write(fd, &(a->elbyte), sizeof(uint64_t));

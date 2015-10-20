@@ -6,6 +6,7 @@ const version = v"0.0.1"
 
 FLAG_BIG_ENDIAN = UInt64(1<<0)
 MAX_BYTES = UInt64(1<<31)
+MAGIC_NUMBER = UInt64(0x7961727261776172)
 
 TYPE_NUM_TO_NAME = Dict(
   0 => "user",
@@ -47,7 +48,7 @@ type RAHeader
 end
 
 function getheader(io::IOStream)
-  flags, eltype, elbits, size, ndims = read(io, UInt64, 5)
+  magic, flags, eltype, elbits, size, ndims = read(io, UInt64, 6)
   dims = read(io, UInt64, ndims)
   return RAHeader(flags,eltype,elbits,size,ndims,dims)
 end
@@ -90,7 +91,7 @@ function rawrite{T,N}(a::Array{T,N}, path::AbstractString)
     flags |=  FLAG_BIG_ENDIAN
   end
   fd = open(path, "w")
-  write(fd, flags,
+  write(fd, MAGIC_NUMBER, flags,
     UInt64(TYPE_NAME_TO_NUM[T]),
     UInt64(sizeof(T)),
     UInt64(length(a)*sizeof(eltype(a))),
