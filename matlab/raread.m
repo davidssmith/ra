@@ -21,11 +21,11 @@ else
 end
 
 function st = getheader(fd)
-h = fread(fd, 5, 'uint64');  
+h = fread(fd, 6, 'uint64');  
 st = {};
-st.flags = h(1);
-st.eltype = h(2);
-st.elbyte = h(3);
-st.size = h(4);
-st.ndims = h(5);
+st.flags = h(2);
+st.eltype = h(3);
+st.elbyte = h(4);
+st.size = h(5);
+st.ndims = h(6);
 st.dims = fread(fd, st.ndims, 'uint64');

@@ -25,6 +25,8 @@ else
 end
 f = fopen(filename,'w');
 flags = 0;
+filemagic = 8746397786917265778;
+fwrite(f, filemagic, 'uint64');
 fwrite(f, flags, 'uint64');
 fwrite(f, eltype, 'uint64');
 fwrite(f, elbytes, 'uint64');
