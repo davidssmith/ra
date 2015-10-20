@@ -160,6 +160,8 @@ shape:
 ...
 ```
 
+Notice that the output at the end is valid YAML markup. This was intentional.  The provided `ra_query()` function reads the RA file header and dumps the information as YAML for easy parsing.
+
 ### Julia
 
 To use the Julia version, add the following lines to your Julia code:
@@ -202,6 +204,8 @@ shape:
 PASSED
 ```
 
+Notice the Julia version also contains a `raquery()` function that produces a YAML dump of the file header.
+
 ### Python
 
 To do.
@@ -215,7 +219,7 @@ Checksums and Time Stamping
 
 A data checksum or time stamp was deliberately not included in the format because it is impossible to checksum a file with its checksum inside it.** Existing methods (e.g. tar) often zero out the checksum field and then checksum the rest of the file, but this requires special software that understands the format, so standard command line checksum tools won't work. Checksum verification is best left to external means, even if it requires a separate file. 
 
-Time stamping is also not necessary, because file systems already provide that. Adding a time stamp that changes upon rewrite or access also foils checksum attemps. HDF5 files are very difficult to checksum for this reason.  It is our belief that the checksum should depending upon data properties only, not any chronology. Two files are identical if they contain identical data, no matter when they were created or accessed last.
+Time stamping is also not necessary, because file systems already provide that. Adding a time stamp that changes upon rewrite or access also foils checksum attemps. HDF5 files are very difficult to checksum for this reason.  It is our belief that the checksum should depend upon data properties only, not any chronology. Two files are identical if they contain identical data, no matter when they were created or accessed last.
 
 To checksum an RA file, simple run your local checksum command. For example, in the main RA directory on a Mac, after you have run the C demo, you can issue:
 
