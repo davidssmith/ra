@@ -208,7 +208,40 @@ Notice the Julia version also contains a `raquery()` function that produces a YA
 
 ### Python
 
-To do.
+To run the Python version, put the `ra.py` file in your source directory and use `import ra` in your script. The demo file `test.py` should an example use case and should look like this when run:
+
+```
+> python test.py
+[[  0.       -infj   1.-1.j           2.-0.5j          3.-0.33333334j]
+ [  4.-0.25j         5.-0.2j          6.-0.16666667j   7.-0.14285715j]
+ [  8.-0.125j        9.-0.11111111j  10.-0.1j         11.-0.09090909j]]
+[[  0.       -infj   1.-1.j           2.-0.5j          3.-0.33333334j]
+ [  4.-0.25j         5.-0.2j          6.-0.16666667j   7.-0.14285715j]
+ [  8.-0.125j        9.-0.11111111j  10.-0.1j         11.-0.09090909j]]
+---
+name: ../data/test.ra
+endian: little
+type: complex64
+size: 96
+dimension: 2
+shape:
+  - 3
+  - 4
+...
+---
+name: test2.ra
+endian: little
+type: complex64
+size: 96
+dimension: 2
+shape:
+  - 3
+  - 4
+...
+TEST PASSED
+```
+
+The only requirements for the Python version are that you have numpy installed. This has been tested on Python 2.7+ but not Python 3.
 
 ### Matlab
 

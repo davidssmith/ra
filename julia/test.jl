@@ -3,7 +3,7 @@ include("ra.jl")
 using RA
 using Base.Test
 
-testfile1 = "test.ra"
+testfile1 = "../data/test.ra"
 testfile2 = "test2.ra"
 
 println("reading $testfile1...")
