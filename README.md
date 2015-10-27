@@ -74,6 +74,12 @@ contains a 12-byte string, a 4-byte int, and 8 8-byte floats, so the total size 
 
 The data is written and read as the binary representation of the hardware you are on. Right now **little endian is assumed**, but big endian support can be added if there is interest.
 
+### Memory Order
+
+The RA format is **column major**, so the first dimension will be the fastest varying one in memory. This decision was made because the majority of scientific languages are traditionally column major, and although C is technically row major it is actually agnostic in applications where multi-dimensional arrays are accessed through computed linear indices (e.g. CUDA).  Of the supplied examples, all are column major except Python. In the case of Python, instead of reading the array into Python and reordering to non-optimal stride, we simply transpose the dimensions before writing and after reading. This means the array looks transposed in Python, but the same dimensions have the same strides in all languages. In other words, the last dimension of the array in Python will be the first one in Julia and Matlab.
+
+
+
 File Introspection
 ------------------
 To get a better handle on the format of an RA file, let's look inside one. If you are on a Unix system or have Cygwin installed on Windows, you can examine the contents of an RA file using command line tools.  For this section, we will use the `test.ra` file provided in the `julia/` subdirectory. 
@@ -87,7 +93,7 @@ First, let's pretend you don't know the dimensionality of the array. Then
 0000020              4                                8
 0000040              96                               2
 0000060
-                            
+
 ```
 
 shows the dimension (2) as the second number on the third line. The command is extracting the first 48 bytes and formatting them as UInt64s. The ridiculous number listed first is the magic number indicating that this is an RA file. A slightly different command illuminates that:
