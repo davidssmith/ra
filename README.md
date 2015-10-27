@@ -41,8 +41,8 @@ The file format is a simple concatenation of a header array and a data array. Th
 | 32             | size   | UInt64         | data segment length in bytes
 | 40             | ndims  | UInt64         | number of array dimensions
 | 48             | dims   | Vector{UInt64} | array dimensions
-| 48 + 8 x dims  | data   | Vector{UInt8}  | **ARRAY DATA**
-| 48 + 8 x dims + size | - | -             | **VOLATILE METADATA**
+| 48 + 8 x ndims | data   | Vector{UInt8}  | **ARRAY DATA**
+| 48 + 8 x ndims + size | - | -             | **VOLATILE METADATA**
 
 ### Elemental Type Specification
 
