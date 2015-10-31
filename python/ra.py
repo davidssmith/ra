@@ -33,13 +33,16 @@ dtype_enum_to_name = {0:'user',1:'int',2:'uint',3:'float',4:'complex'}
 def read(filename):
     f = open(filename,'rb')
     h = getheader(f)
+    h['dims'] = h['dims'][::-1]
     if h['eltype'] == 0:
         print 'Unable to convert user data. Returning raw byte string.'
         return f.read(h['size'])
     else:
         d = '%s%d' % (dtype_enum_to_name[h['eltype']], h['elbyte']*8)
         data = np.fromstring(f.read(h['size']), dtype=np.dtype(d))
-        return data.reshape(h['dims'])
+        data = data.reshape(h['dims']).transpose()
+        return data
+
 
 def getheader(f):
     filemagic = f.read(8)
@@ -77,7 +80,6 @@ def query(filename):
 
 
 def write(data, filename):
-    f = open(filename,'wb')
     flags = 0
     if data.dtype.str[0] == '>':
         flags |= FLAG_BIG_ENDIAN
@@ -90,6 +92,7 @@ def write(data, filename):
     ndims = len(data.shape)
     dims = data.shape
     dims = np.array([_ for _ in data.shape]).astype('uint64')
+    f = open(filename,'wb')
     f.write(struct.pack('<Q', MAGIC_NUMBER))
     f.write(struct.pack('<Q', flags))
     f.write(struct.pack('<Q', eltype))
@@ -97,5 +100,5 @@ def write(data, filename):
     f.write(struct.pack('<Q', size))
     f.write(struct.pack('<Q', ndims))
     f.write(dims.tobytes())
-    f.write(data.tobytes())
+    f.write(data.transpose().tobytes())
     f.close()
