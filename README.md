@@ -6,7 +6,7 @@ Introduction
 
 RA is a simple file format for storing n-dimensional arrays. RA stands for **raw array**
 and should be pronounced *arr-ay*, although it is not a coincidence that the
-mispronounciation *rah* (as in "raw" in some dialects) also makes sense.
+mispronunciation *rah* (as in "raw" in some dialects) also makes sense.
 
 RA was designed to be portable, fast, and storage
 efficient. For scientific applications in particular, it can allow the simple
