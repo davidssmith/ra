@@ -28,53 +28,58 @@
 */
 
 #include "ra.h"
+#include <sysexits.h>
 
+#define NAME_MAX 256
 
 int
-main ()
+cfl_write (ra_t *a, char* filename)
 {
-    float2 *r, *s;
-    ra_t a,b;
-    int k;
-    uint64_t N = 12*sizeof(float2);
-    printf("test data is %llu floats\n", N/sizeof(float2));
-    r = (float2*)malloc(N);
-    if (r == NULL)
-        printf("could not allocate memory for test data\n");
-    for (k = 0; k < N/sizeof(float2); ++k) {
-        r[k].x = k;
-        r[k].y = -1/(float)k;
-    }
-    a.flags = 0;
-    a.eltype = RA_TYPE_COMPLEX;
-    a.elbyte = sizeof(float2);
-    a.size = N;
-    a.ndims = 2;
-    a.dims = (uint64_t*)malloc(a.ndims*sizeof(uint64_t));
-    a.dims[0] = 3;
-    a.dims[1] = 4;
-    a.data = (void*)r;
-    ra_write(&a, "test.ra");
-    ra_read(&b, "test.ra");
-    s = (float2*)b.data;
-    for (k = 0; k < b.size/sizeof(float2); ++k) {
-        if (r[k].x != s[k].x)
-            printf("%f != %f\n",r[k].x, s[k].x);
-    }
-    for (k = 0; k < 10; ++k)
-        printf("%f+%fim\n", s[k].x, s[k].y);
-    printf("TESTS PASSED!\n");
-    ra_free(&a);
-    ra_free(&b);
-    ra_query("test.ra");
-    return 0;
+
+  if (a->eltype != 4) {
+    printf("Can only convert RA files containing complex floats.\n");
+    exit(EX_DATAERR);
+  }
+  if (a->elbyte != 8)
+    fprintf(stderr, "Warning: converting double to single will lose precision.\n");
+  char path[NAME_MAX];
+  snprintf(path, NAME_MAX, "%s.cfl", filename);
+  int fd = open(path, O_WRONLY|O_TRUNC|O_CREAT,0644);
+  if (fd == -1)
+      err(errno, "unable to open %s for writing", path);
+
+  uint64_t bytesleft = a->size;
+  uint8_t *data_in_cursor = a->data;
+
+  uint64_t bufsize = bytesleft < RA_MAX_BYTES ? bytesleft : RA_MAX_BYTES;
+  while (bytesleft > 0) {
+      write(fd, data_in_cursor, bufsize);
+      data_in_cursor += bufsize / sizeof(uint8_t);
+      bytesleft -= bufsize;
+  }
+  snprintf(path, NAME_MAX, "%s.hdr", filename);
+  FILE *fp = fopen(path, "w");
+  if (fp == NULL)
+      err(errno, "unable to open %s for writing", path);
+
+  for (int k = 0; k < a->ndims; ++k)
+    fprintf(fp, "%llu ", a->dims[k]);
+  fprintf(fp, "0\n");
+  fclose(fp);
+  return EX_OK;
+
 }
 
-
-
-void
-ra2cfl (ra_file *r)
+int
+main (int argc, char *argv[])
 {
-
-
+    ra_t a;
+    if (argc < 3) {
+      printf("Usage: ra2cfl <rafile> <cflfile>");
+      exit(EX_USAGE);
+    }
+    ra_read(&a, argv[1]);
+    cfl_write(&a, argv[2]);
+    ra_free(&a);
+    return EX_OK;
 }

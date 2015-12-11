@@ -127,54 +127,6 @@ ra_write (ra_t *a, const char *path)
 #endif
 
 
-#ifdef TEST
-
-#ifndef float2
-    typedef struct { float x,y; } float2;
-#endif
-
-int
-main ()
-{
-    float2 *r, *s;
-    ra_t a,b;
-    int k;
-    uint64_t N = 12*sizeof(float2);
-    printf("test data is %llu floats\n", N/sizeof(float2));
-    r = (float2*)malloc(N);
-    if (r == NULL)
-        printf("could not allocate memory for test data\n");
-    for (k = 0; k < N/sizeof(float2); ++k) {
-        r[k].x = k;
-        r[k].y = -1/(float)k;
-    }
-    a.flags = 0;
-    a.eltype = RA_TYPE_COMPLEX;
-    a.elbyte = sizeof(float2);
-    a.size = N;
-    a.ndims = 2;
-    a.dims = (uint64_t*)malloc(a.ndims*sizeof(uint64_t));
-    a.dims[0] = 3;
-    a.dims[1] = 4;
-    a.data = (void*)r;
-    ra_write(&a, "test.ra");
-    ra_read(&b, "test.ra");
-    s = (float2*)b.data;
-    for (k = 0; k < b.size/sizeof(float2); ++k) {
-        if (r[k].x != s[k].x)
-            printf("%f != %f\n",r[k].x, s[k].x);
-    }
-    for (k = 0; k < 10; ++k)
-        printf("%f+%fim\n", s[k].x, s[k].y);
-    printf("TESTS PASSED!\n");
-    ra_free(&a);
-    ra_free(&b);
-    ra_query("test.ra");
-    return 0;
-}
-#endif
-
-
 void
 ra_free (ra_t *a)
 {
