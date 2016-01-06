@@ -28,49 +28,64 @@
 */
 
 #include "ra.h"
+#include <stdio.h>
+#include <sysexits.h>
 
-
-#ifndef float2
-    typedef struct { float x,y; } float2;
-#endif
+#define NAME_MAX 256
+#define LINE_MAX 256
 
 int
-main ()
+cfl_read (ra_t *a, char* filename)
 {
-    float2 *r, *s;
-    ra_t a,b;
-    int k;
-    uint64_t N = 12*sizeof(float2);
-    printf("test data is %llu floats\n", N/sizeof(float2));
-    r = (float2*)malloc(N);
-    if (r == NULL)
-        printf("could not allocate memory for test data\n");
-    for (k = 0; k < N/sizeof(float2); ++k) {
-        r[k].x = k;
-        r[k].y = -1/(float)k;
-    }
-    a.flags = 0;
-    a.eltype = RA_TYPE_COMPLEX;
-    a.elbyte = sizeof(float2);
-    a.size = N;
-    a.ndims = 2;
-    a.dims = (uint64_t*)malloc(a.ndims*sizeof(uint64_t));
-    a.dims[0] = 3;
-    a.dims[1] = 4;
-    a.data = (void*)r;
-    ra_write(&a, "test.ra");
-    ra_read(&b, "test.ra");
-    s = (float2*)b.data;
-    for (k = 0; k < b.size/sizeof(float2); ++k) {
-        if (r[k].x != s[k].x)
-            printf("%f != %f\n",r[k].x, s[k].x);
-    }
-    for (k = 0; k < 10; ++k)
-        printf("%f+%fim\n", s[k].x, s[k].y);
-    printf("TESTS PASSED!\n");
-    ra_free(&a);
-    ra_free(&b);
-    ra_query("test.ra");
-    return 0;
+  char path[NAME_MAX], line[LINE_MAX];
+  snprintf(path, NAME_MAX, "%s.hdr", filename);
+  FILE *fp = fopen(path, "r");
+  if (fp == NULL)
+      err(errno, "unable to open %s for reading", path);
+
+  if (getline(&line, LINE_MAX, fp) != -1) {
+      a->ndims = 0;
+      for (int c = 0; c != '\n' && c != '\0'; ++c)
+        if (line[c] == ' ')
+          a->ndims++;
+  } else {
+    err(errno, "unable to parse first line of %s", path);
+  }
+  fclose(fp);
+
+  a->ndims--;  // to account for trailing 0 dimension
+  a->dims = (uint64_t*)malloc(a->ndims*sizeof(uint64_t));
+  a->flags = 0;
+  a->eltype = RA_TYPE_COMPLEX;
+  a->elbyte = 8;
+  a->size = a->elbyte;
+  int i;
+  for (int k = 0; k < a->ndims; ++k) {
+    sscanf(line, "%d", &i);
+    a->dims[k] = i;
+    a->size *= a->dims[k];
+  }
+  snprintf(path, NAME_MAX, "%s.cfl", filename);
+  int fd = open(path, O_RDONLY);
+  if (fd == -1)
+      err(errno, "unable to open %s for writing", path);
+  a->data = malloc(a->size);
+  read(fd, a->data, a->size);
+  close(fd);
+
+  return EX_OK;
 }
 
+int
+main (int argc, char *argv[])
+{
+    ra_t a;
+    if (argc < 3) {
+      printf("Usage: cfl2ra <cflfile> <rafile>\n");
+      exit(EX_USAGE);
+    }
+    cfl_read(&a, argv[1]);
+    ra_write(&a, argv[2]);
+    ra_free(&a);
+    return EX_OK;
+}

@@ -35,7 +35,6 @@
 int
 cfl_write (ra_t *a, char* filename)
 {
-
   if (a->eltype != 4) {
     printf("Can only convert RA files containing complex floats.\n");
     exit(EX_DATAERR);
