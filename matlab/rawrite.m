@@ -55,5 +55,5 @@ if w.complex, nd = nd -1; end
 dims = size(data);
 if w.complex, dims = dims(2:end); end
 fwrite(f, [filemagic, flags, eltype, elbytes, w.bytes, nd, dims], 'uint64');
-fwrite(f, data, w.class);
+fwrite(f, data(:), w.class);
 fclose(f);
