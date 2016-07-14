@@ -49,7 +49,7 @@ else
 end
 f = fopen(filename,'w');
 flags = 0;
-filemagic = 8746397786917265778;
+filemagic = uint64(8746397786917265778);
 nd = ndims(data);
 if w.complex, nd = nd -1; end
 dims = size(data);
