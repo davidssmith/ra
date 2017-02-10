@@ -122,11 +122,6 @@ ra_write (ra_t *a, const char *path)
 }
 
 
-#ifdef __cplusplus
-}
-#endif
-
-
 void
 ra_free (ra_t *a)
 {
