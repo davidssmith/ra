@@ -52,7 +52,7 @@ validate_types (const ra_t* src, const ra_t* dst);
 int
 main (int argc, char *argv[])
 {
-    uint64_t j;
+    uint64_t j, nelem;
     ra_t src, dst;
     // conversion helpers
     int8_t *src_i8, *dst_i8;  
@@ -80,15 +80,20 @@ main (int argc, char *argv[])
     dst.ndims = src.ndims;
 
     dst.dims = (uint64_t*)malloc(dst.ndims*sizeof(uint64_t));
-    for (j = 0; j < src.ndims; ++j)
+    nelem = 1;
+    for (j = 0; j < src.ndims; ++j) {
         dst.dims[j] = src.dims[j];
+        nelem *= src.dims[j];
+    }
 
     // convert the data type
     dst.size = dst.elbyte * src.size / src.elbyte;
     dst.data = (uint8_t*)malloc(dst.size);
 
-    if        (src.eltype == RA_TYPE_INT     && dst.eltype == RA_TYPE_INT) {  
-        
+    if (src.eltype == RA_TYPE_INT            && dst.eltype == RA_TYPE_INT) {  
+          
+        for (j = 0; j < nelem; ++j)
+            
     } else if (src.eltype == RA_TYPE_INT     && dst.eltype == RA_TYPE_UINT) {  
 
     } else if (src.eltype == RA_TYPE_INT     && dst.eltype == RA_TYPE_FLOAT) { 
