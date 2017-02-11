@@ -60,6 +60,7 @@ static uint64_t RA_MAGIC_NUMBER = 0x7961727261776172ULL;
 
 /* flags */
 #define RA_FLAG_BIG_ENDIAN  (1ULL<<0)
+#define RA_FLAG_COMPRESSED  (2ULL<<0)
 
 /* maximum size that read system call can handle */
 #define RA_MAX_BYTES  (1ULL<<31)
