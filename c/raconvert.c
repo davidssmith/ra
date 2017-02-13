@@ -36,8 +36,7 @@ validate_types (const ra_t* src, const ra_t* dst)
         printf("USER-defined type must be handled by the USER. :-)\n");
         exit(EX_USAGE);
     } else if (src->eltype == RA_TYPE_COMPLEX && dst->eltype != RA_TYPE_COMPLEX) {
-        printf("Cannot convert complex to non-complex types.\n");
-        exit(EX_USAGE);
+        printf("Warning: converting complex to non-complex types may discard information.\n");
     } else if (dst->elbyte == src->elbyte && dst->eltype == src->eltype) {
         printf("Specified type is already the type of the source. Nothing to be done.\n");
         exit(EX_OK);
@@ -45,7 +44,7 @@ validate_types (const ra_t* src, const ra_t* dst)
         printf("Conversion of compressed types is not implemented yet.\n"); 
         exit(EX_USAGE);
     } else if (dst->elbyte < src->elbyte) 
-        printf("Destination type is smaller than source. Loss of precision may occur.\n");
+        printf("Warning: reducing type size may cause loss of precision.\n");
 }
 
 
@@ -179,10 +178,10 @@ main (int argc, char *argv[])
         CONVERT(float,double) 
     else if CASE(FLOAT,8,FLOAT,4)     
         CONVERT(double,float) 
-    else if CASE(COMPLEX,8,COMPLEX,4) {
+    else if CASE(COMPLEX,16,COMPLEX,8) {
         nelem *= 2;
         CONVERT(double,float) 
-    } else if CASE(COMPLEX,4,COMPLEX,8) {
+    } else if CASE(COMPLEX,8,COMPLEX,16) {
         nelem *= 2;
         CONVERT(float,double) 
     } else if CASE(FLOAT,4,COMPLEX,8) {
@@ -197,7 +196,19 @@ main (int argc, char *argv[])
         double *tmp_dst = (double *)dst.data;
         for (size_t i = 0; i < nelem; ++i) {   
             tmp_dst[2*i] = tmp_src[i]; 
-            tmp_dst[2*i+1] = 0.f;
+            tmp_dst[2*i+1] = 0.;
+        }
+    } else if CASE(COMPLEX,8,FLOAT,4) {       // complex -> float using real part
+        float *tmp_src = (float *)src.data; 
+        float *tmp_dst = (float *)dst.data;
+        for (size_t i = 0; i < nelem; ++i) {
+            tmp_dst[i] = tmp_src[2*i]; 
+        }
+    } else if CASE(COMPLEX,16,FLOAT,8) {
+        double *tmp_src = (double *)src.data; 
+        double *tmp_dst = (double *)dst.data;
+        for (size_t i = 0; i < nelem; ++i) {   
+            tmp_dst[i] = tmp_src[2*i]; 
         }
     } else {
         printf("Specified type and size did not conform to any supported combinations.\n");
