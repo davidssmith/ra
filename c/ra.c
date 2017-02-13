@@ -24,7 +24,19 @@
   SOFTWARE.
 */
 
+#include <sysexits.h>
 #include "ra.h"
+
+void
+validate_magic (const uint64_t magic)
+{
+   if (magic != RA_MAGIC_NUMBER) {
+        fprintf(stderr, "Invalid RA file.\n");
+        exit(EX_DATAERR);
+   }
+}
+
+// TODO: extend validation checks to internal consistency
 
 void
 ra_query (const char *path)
@@ -32,16 +44,17 @@ ra_query (const char *path)
     ra_t a;
     int j, fd;
     uint64_t magic;
-    printf("---\nname: %s\n", path);
     fd = open(path, O_RDONLY);
     if (fd == -1)
         err(errno, "unable to open output file for writing");
     read(fd, &magic, sizeof(uint64_t));
+    validate_magic(magic);
     read(fd, &(a.flags), sizeof(uint64_t));
     read(fd, &(a.eltype), sizeof(uint64_t));
     read(fd, &(a.elbyte), sizeof(uint64_t));
     read(fd, &(a.size), sizeof(uint64_t));
     read(fd, &(a.ndims), sizeof(uint64_t));
+    printf("---\nname: %s\n", path);
     printf("endian: %s\n", a.flags  & RA_FLAG_BIG_ENDIAN ? "big" : "little");
     printf("type: %s%lld\n", RA_TYPE_NAMES[a.eltype], a.elbyte*8);
     printf("size: %lld\n", a.size);
@@ -64,6 +77,7 @@ ra_read (ra_t *a, const char *path)
     if (fd == -1)
         err(errno, "unable to open output file for writing");
     read(fd, &magic, sizeof(uint64_t));
+    validate_magic(magic);
     read(fd, &(a->flags), sizeof(uint64_t));
     read(fd, &(a->eltype), sizeof(uint64_t));
     read(fd, &(a->elbyte), sizeof(uint64_t));
