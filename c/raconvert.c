@@ -71,8 +71,10 @@ main (int argc, char *argv[])
         dst.eltype = atoi(argv[1]);
         dst.elbyte = atoi(argv[2]); 
         validate_types(&src, &dst);
-    } else
+    } else {
         printf("Usage: %s <eltype> <elbyte> <source.ra> <dest.ra>\n", argv[0]);
+        exit(EX_USAGE);
+    }
 
     // copy the properties that don't change to the destination file
     dst.flags = src.flags;
