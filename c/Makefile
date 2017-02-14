@@ -4,8 +4,10 @@ LFLAGS= #-lpthread -lblosc -L/usr/local/lib
 
 objects = ra.o
 
-all: ra2cfl cfl2ra rahead raconvert racompress
+all: ra2cfl cfl2ra rahead raconvert racompress test
 
+test: $(objects) test.o
+	$(CC) $(LFLAGS) $(objects) test.o -o test
 ra2cfl: $(objects)  ra2cfl.o
 	$(CC) $(LFLAGS) $(objects) ra2cfl.o -o ra2cfl
 cfl2ra: $(objects)  cfl2ra.o
@@ -21,4 +23,4 @@ racompress: $(objects) racompress.o
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f *.o ra2cfl cfl2ra rahead raconvert racompress
+	rm -f *.o test ra2cfl cfl2ra rahead raconvert racompress

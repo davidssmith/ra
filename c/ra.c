@@ -174,6 +174,19 @@ validate_conversion (const ra_t* r, const uint64_t neweltype, const uint64_t new
     for (size_t i = 0; i < nelem; ++i) tmp_dst[i] = tmp_src[i]; }
 
 
+uint16_t
+float32_to_float16 (const float x)
+{
+    uint32_t fltInt32 = (uint32_t)x;
+    uint16_t fltInt16;
+    fltInt16 = (fltInt32 >> 31) << 5;
+    uint16_t tmp = (fltInt32 >> 23) & 0xff;
+    tmp = (tmp - 0x70) & ((uint32_t)((int32_t)(0x70 - tmp) >> 4) >> 27);
+    fltInt16 = (fltInt16 | tmp) << 10;
+    fltInt16 |= (fltInt32 >> 13) & 0x3ff;
+    return fltInt16;
+}
+
 
 void
 ra_convert (ra_t *r, const uint64_t eltype, const uint64_t elbyte)
@@ -327,8 +340,9 @@ ra_convert (ra_t *r, const uint64_t eltype, const uint64_t elbyte)
 
 
 uint64_t
-calc_min_elbyte (const double max, const double min)
+calc_min_elbyte_int (const int64_t max, const int64_t min)
 {
+    printf("min: %ll, max: %ll\n", min, max);
     int minbits_reqd = log2(max - min);
     printf("minbits_reqd: %d\n", minbits_reqd);
     uint64_t m = 1;
@@ -337,62 +351,89 @@ calc_min_elbyte (const double max, const double min)
     return m;
 }
 
+uint64_t
+calc_min_elbyte_float (const double max, const double min)
+{
+    printf("min: %g, max: %g\n", min, max);
+    int minbits = log2(fabs(max/min));
+    printf("minbits: %d\n", minbits);
+    if (minbits < 16)
+        return 2;
+    else if (minbits < 32)
+        return 4;
+    else
+        return 8;
+}
 
-#define MINMAX_AND_RESCALE(NAME,TYPE) \
+
+#define MINMAX_AND_RESCALE_INT(NAME,TYPE) \
     { TYPE* rdr; rdr = (TYPE*) r->data; \
-      min = rdr[0]; max = rdr[0]; \
+      int64_t min = rdr[0]; int64_t max = rdr[0]; \
       for (size_t i = 1; i < nelem; ++i) { \
           if (rdr[i] < min) min = rdr[i]; \
           if (rdr[i] > max) max = rdr[i]; }\
-      min_elbyte = calc_min_elbyte(max, min); \
+      min_elbyte = calc_min_elbyte_int(max, min); \
       if (min_elbyte < r->elbyte)\
           for (size_t i = 0; i < nelem; ++i)  rdr[i] -= min; \
      }
+
+ #define MINMAX_AND_RESCALE_FLOAT(NAME,TYPE) \
+     { TYPE* rdr; rdr = (TYPE*) r->data; \
+       double min = rdr[0]; double max = rdr[0]; \
+       for (size_t i = 1; i < nelem; ++i) { \
+           if (rdr[i] < min) min = rdr[i]; \
+           if (rdr[i] > max) max = rdr[i]; }\
+       min_elbyte = calc_min_elbyte_float(max, min); \
+       if (min_elbyte < r->elbyte)\
+           for (size_t i = 0; i < nelem; ++i)  rdr[i] -= min; \
+      }
 
 #undef CASE
 #define CASE(TYPE1,BYTE1) \
     (r->eltype == RA_TYPE_##TYPE1 && r->elbyte == BYTE1)
 
 
+
+
 int
 ra_compress (ra_t *r)
 {
-    double min, max;
-    uint64_t nelem = 1, min_elbyte;
+    uint64_t nelem = 1, min_elbyte, orig_elbyte;
     for (uint64_t j = 0; j < r->ndims; ++j)
         nelem *= r->dims[j];
 
         printf("assuming NELEM: %u\n", nelem);
 
     if CASE(INT,2)
-        MINMAX_AND_RESCALE(r,int16_t)
+        MINMAX_AND_RESCALE_INT(r,int16_t)
     else if CASE(INT,4)
-        MINMAX_AND_RESCALE(r,int32_t)
+        MINMAX_AND_RESCALE_INT(r,int32_t)
     else if CASE(INT,8)
-        MINMAX_AND_RESCALE(r,int64_t)
+        MINMAX_AND_RESCALE_INT(r,int64_t)
     else if CASE(UINT,2)
-        MINMAX_AND_RESCALE(r,uint16_t)
+        MINMAX_AND_RESCALE_INT(r,uint16_t)
     else if CASE(UINT,4)
-        MINMAX_AND_RESCALE(r,uint32_t)
+        MINMAX_AND_RESCALE_INT(r,uint32_t)
     else if CASE(UINT,8)
-        MINMAX_AND_RESCALE(r,uint64_t)
+        MINMAX_AND_RESCALE_INT(r,uint64_t)
     else if CASE(FLOAT,4)
-        MINMAX_AND_RESCALE(r,float)   // TODO: implement float16
+        MINMAX_AND_RESCALE_FLOAT(r,float)   // TODO: implement float16
     else if CASE(FLOAT,8)
-        MINMAX_AND_RESCALE(r,double)
+        MINMAX_AND_RESCALE_FLOAT(r,double)
     else if CASE(COMPLEX,8) {
         nelem *= 2;
-        MINMAX_AND_RESCALE(r,float)
+        MINMAX_AND_RESCALE_FLOAT(r,float)
     } else if CASE(COMPLEX,16) {
         nelem *= 2;
-        MINMAX_AND_RESCALE(r,double)
+        MINMAX_AND_RESCALE_FLOAT(r,double)
     }
 
-    printf("Can compress to %u bytes.\n", min_elbyte);
     if (min_elbyte < r->elbyte) {
+        printf("Can compress to %u bytes.\n", min_elbyte);
+        orig_elbyte = r->elbyte;
         ra_convert(r, r->eltype, min_elbyte);
         r->flags |= RA_FLAG_COMPRESSED;
     }
 
-    return min_elbyte != r->elbyte;
+    return min_elbyte != orig_elbyte;
 }
