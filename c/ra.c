@@ -24,6 +24,7 @@
   SOFTWARE.
 */
 
+#include <float.h>
 #include <math.h>
 #include <sysexits.h>
 #include "ra.h"
@@ -86,12 +87,13 @@ ra_read (ra_t *a, const char *path)
     read(fd, &(a->ndims), sizeof(uint64_t));
     a->dims = (uint64_t*)malloc(a->ndims*sizeof(uint64_t));
     read(fd, a->dims, a->ndims*sizeof(uint64_t));
-    a->data = (uint8_t*)malloc(a->size);
+    bytesleft = a->size;
+    // if (a->flags & RA_FLAG_COMPRESSED)
+    //     bytesleft += 16;
+    a->data = (uint8_t*)malloc(bytesleft);
     if (a->data == NULL)
         err(errno, "unable to allocate memory for data");
     uint8_t *data_cursor = a->data;
-
-    bytesleft = a->size;
     while (bytesleft > 0) {
         bytestoread = bytesleft < RA_MAX_BYTES ? bytesleft : RA_MAX_BYTES;
         read(fd, data_cursor, bytestoread);
@@ -123,6 +125,7 @@ ra_write (ra_t *a, const char *path)
     write(fd, a->dims, a->ndims*sizeof(uint64_t));
 
     bytesleft = a->size;
+    // if (a->flags & RA_FLAG_COMPRESSED) bytesleft += 16;
     data_in_cursor = a->data;
 
     bufsize = bytesleft < RA_MAX_BYTES ? bytesleft : RA_MAX_BYTES;
@@ -144,6 +147,7 @@ ra_free (ra_t *a)
     free(a->data);
 }
 
+
 void
 validate_conversion (const ra_t* r, const uint64_t neweltype, const uint64_t newelbyte)
 {
@@ -158,7 +162,7 @@ validate_conversion (const ra_t* r, const uint64_t neweltype, const uint64_t new
     } else if (r->flags & RA_FLAG_COMPRESSED) {
         printf("Conversion of compressed types is not implemented yet.\n");
         exit(EX_USAGE);
-    } else if (newelbyte < r->elbyte)
+    } else if (newelbyte < r->elbyte && r->eltype != RA_TYPE_INT && r->eltype != RA_TYPE_UINT)
         printf("Warning: reducing type size may cause loss of precision.\n");
 }
 
@@ -227,14 +231,16 @@ ra_convert (ra_t *r, const uint64_t eltype, const uint64_t elbyte)
     else if CASE(INT,4,INT,8)
         CONVERT(int32_t,int64_t)
 
-    else if CASE(UINT,8,INT,1)
-        CONVERT(uint64_t,int8_t)
-    else if CASE(UINT,8,INT,2)
-        CONVERT(uint64_t,int16_t)
-    else if CASE(UINT,8,INT,4)
-        CONVERT(uint64_t,int32_t)
+    else if CASE(INT,8,INT,1)
+        CONVERT(int64_t,int8_t)
+    else if CASE(INT,8,INT,2)
+        CONVERT(int64_t,int16_t)
+    else if CASE(INT,8,INT,4)
+        CONVERT(int64_t,int32_t)
 
-    else if CASE(UINT,1,INT,2)        // UINT -> INT
+    else if CASE(UINT,1,INT,1)        // UINT -> INT
+        CONVERT(uint8_t,int8_t)
+    else if CASE(UINT,1,INT,2)
         CONVERT(uint8_t,int16_t)
     else if CASE(UINT,1,INT,4)
         CONVERT(uint8_t,int32_t)
@@ -243,6 +249,8 @@ ra_convert (ra_t *r, const uint64_t eltype, const uint64_t elbyte)
 
     else if CASE(UINT,2,INT,1)
         CONVERT(uint16_t,int8_t)
+    else if CASE(UINT,2,INT,2)
+        CONVERT(uint16_t,int16_t)
     else if CASE(UINT,2,INT,4)
         CONVERT(uint16_t,int32_t)
     else if CASE(UINT,2,INT,8)
@@ -252,6 +260,8 @@ ra_convert (ra_t *r, const uint64_t eltype, const uint64_t elbyte)
         CONVERT(uint32_t,int8_t)
     else if CASE(UINT,4,INT,2)
         CONVERT(uint32_t,int16_t)
+    else if CASE(UINT,4,INT,4)
+        CONVERT(uint32_t,int32_t)
     else if CASE(UINT,4,INT,8)
         CONVERT(uint32_t,int64_t)
 
@@ -261,6 +271,8 @@ ra_convert (ra_t *r, const uint64_t eltype, const uint64_t elbyte)
         CONVERT(uint64_t,int16_t)
     else if CASE(UINT,8,INT,4)
         CONVERT(uint64_t,int32_t)
+    else if CASE(UINT,8,INT,8)
+        CONVERT(uint64_t,int64_t)
 
     else if CASE(UINT,1,UINT,2)        // UINT -> UINT
         CONVERT(uint8_t,uint16_t)
@@ -342,26 +354,26 @@ ra_convert (ra_t *r, const uint64_t eltype, const uint64_t elbyte)
 uint64_t
 calc_min_elbyte_int (const int64_t max, const int64_t min)
 {
-    printf("min: %ll, max: %ll\n", min, max);
-    int minbits_reqd = log2(max - min);
+    printf("min: %d, max: %d\n", min, max);
+    int minbits_reqd = log2(max);
     printf("minbits_reqd: %d\n", minbits_reqd);
-    uint64_t m = 1;
-    while (m*8 < minbits_reqd)
+    uint64_t m = 8;
+    while (m < minbits_reqd)
         m *= 2;
-    return m;
+    return m / 8;
 }
 
 uint64_t
 calc_min_elbyte_float (const double max, const double min)
 {
     printf("min: %g, max: %g\n", min, max);
-    int minbits = log2(fabs(max/min));
-    printf("minbits: %d\n", minbits);
-    if (minbits < 16)
-        return 2;
-    else if (minbits < 32)
-        return 4;
-    else
+    double dynamic_range = fabs(min/max);
+    printf("dynamic_range: %g\n", dynamic_range);
+    // if (minbits < 16)
+    //     return 2;
+    // else if (minbits < 32)
+    //     return 4;
+    // else
         return 8;
 }
 
@@ -373,8 +385,6 @@ calc_min_elbyte_float (const double max, const double min)
           if (rdr[i] < min) min = rdr[i]; \
           if (rdr[i] > max) max = rdr[i]; }\
       min_elbyte = calc_min_elbyte_int(max, min); \
-      if (min_elbyte < r->elbyte)\
-          for (size_t i = 0; i < nelem; ++i)  rdr[i] -= min; \
      }
 
  #define MINMAX_AND_RESCALE_FLOAT(NAME,TYPE) \
@@ -384,8 +394,6 @@ calc_min_elbyte_float (const double max, const double min)
            if (rdr[i] < min) min = rdr[i]; \
            if (rdr[i] > max) max = rdr[i]; }\
        min_elbyte = calc_min_elbyte_float(max, min); \
-       if (min_elbyte < r->elbyte)\
-           for (size_t i = 0; i < nelem; ++i)  rdr[i] -= min; \
       }
 
 #undef CASE
@@ -393,16 +401,12 @@ calc_min_elbyte_float (const double max, const double min)
     (r->eltype == RA_TYPE_##TYPE1 && r->elbyte == BYTE1)
 
 
-
-
 int
 ra_compress (ra_t *r)
 {
-    uint64_t nelem = 1, min_elbyte, orig_elbyte;
+    uint64_t nelem = 1, min_elbyte = 8, orig_elbyte = r->elbyte;
     for (uint64_t j = 0; j < r->ndims; ++j)
         nelem *= r->dims[j];
-
-        printf("assuming NELEM: %u\n", nelem);
 
     if CASE(INT,2)
         MINMAX_AND_RESCALE_INT(r,int16_t)
