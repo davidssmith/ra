@@ -24,6 +24,7 @@
   SOFTWARE.
 */
 
+#include <math.h>
 #include <sysexits.h>
 #include "ra.h"
 
@@ -162,6 +163,7 @@ validate_conversion (const ra_t* r, const uint64_t neweltype, const uint64_t new
 }
 
 
+#undef CASE
 #define CASE(TYPE1,BYTE1,TYPE2,BYTE2) \
     (r->eltype == RA_TYPE_##TYPE1 && r->elbyte == BYTE1 && \
      eltype == RA_TYPE_##TYPE2 && elbyte == BYTE2)
@@ -328,6 +330,7 @@ uint64_t
 calc_min_elbyte (const double max, const double min)
 {
     int minbits_reqd = log2(max - min);
+    printf("minbits_reqd: %d\n", minbits_reqd);
     uint64_t m = 1;
     while (m*8 < minbits_reqd)
         m *= 2;
@@ -335,9 +338,18 @@ calc_min_elbyte (const double max, const double min)
 }
 
 
-#define DECLARE_READER(NAME,TYPE) \
-    { TYPE* NAME##_rdr; NAME##_rdr = (TYPE*) NAME##->data; }
+#define MINMAX_AND_RESCALE(NAME,TYPE) \
+    { TYPE* rdr; rdr = (TYPE*) r->data; \
+      min = rdr[0]; max = rdr[0]; \
+      for (size_t i = 1; i < nelem; ++i) { \
+          if (rdr[i] < min) min = rdr[i]; \
+          if (rdr[i] > max) max = rdr[i]; }\
+      min_elbyte = calc_min_elbyte(max, min); \
+      if (min_elbyte < r->elbyte)\
+          for (size_t i = 0; i < nelem; ++i)  rdr[i] -= min; \
+     }
 
+#undef CASE
 #define CASE(TYPE1,BYTE1) \
     (r->eltype == RA_TYPE_##TYPE1 && r->elbyte == BYTE1)
 
@@ -345,45 +357,40 @@ calc_min_elbyte (const double max, const double min)
 int
 ra_compress (ra_t *r)
 {
-    uint64_t nelem = 1;
+    double min, max;
+    uint64_t nelem = 1, min_elbyte;
     for (uint64_t j = 0; j < r->ndims; ++j)
         nelem *= r->dims[j];
 
+        printf("assuming NELEM: %u\n", nelem);
+
     if CASE(INT,2)
-        DECLARE_READER(r,int16_t)
+        MINMAX_AND_RESCALE(r,int16_t)
     else if CASE(INT,4)
-        DECLARE_READER(r,int32_t)
+        MINMAX_AND_RESCALE(r,int32_t)
     else if CASE(INT,8)
-        DECLARE_READER(r,int64_t)
+        MINMAX_AND_RESCALE(r,int64_t)
     else if CASE(UINT,2)
-        DECLARE_READER(r,uint16_t)
+        MINMAX_AND_RESCALE(r,uint16_t)
     else if CASE(UINT,4)
-        DECLARE_READER(r,uint32_t)
+        MINMAX_AND_RESCALE(r,uint32_t)
     else if CASE(UINT,8)
-        DECLARE_READER(r,uint64_t)
+        MINMAX_AND_RESCALE(r,uint64_t)
     else if CASE(FLOAT,4)
-        DECLARE_READER(r,float)   // TODO: implement float16
+        MINMAX_AND_RESCALE(r,float)   // TODO: implement float16
     else if CASE(FLOAT,8)
-        DECLARE_READER(r,double)
+        MINMAX_AND_RESCALE(r,double)
     else if CASE(COMPLEX,8) {
         nelem *= 2;
-        DECLARE_READER(r,float)
+        MINMAX_AND_RESCALE(r,float)
     } else if CASE(COMPLEX,16) {
         nelem *= 2;
-        DECLARE_READER(r,double)
+        MINMAX_AND_RESCALE(r,double)
     }
 
-    double min = r_rdr[0];
-    double max = r_rdr[0];
-    for (size_t i = 1; i < nelem; ++i) {
-        if (r_rdr[i] < min) min = r_rdr[i];
-        if (r_rdr[i] > max) max = r_rdr[i];
-    }
-    uint64_t min_elbyte = calc_min_elbyte(max, min);
-    if (min_elbyte < r->elbyte) {  // compression is possible
-        for (size_t i = 0; i < nelem; ++i)
-            r_rdr[i] -= min;
-        ra_convert(&r, r->eltype, min_elbyte);
+    printf("Can compress to %u bytes.\n", min_elbyte);
+    if (min_elbyte < r->elbyte) {
+        ra_convert(r, r->eltype, min_elbyte);
         r->flags |= RA_FLAG_COMPRESSED;
     }
 
