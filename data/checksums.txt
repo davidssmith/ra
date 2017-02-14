@@ -1,1 +1,5 @@
+MD5 (rand100.ra) = 2151e014c70ec29132a8063290ee5053
+MD5 (randflt.ra) = 288854af91e902aa8939bd048d7ff09d
+MD5 (randi64.ra) = 339bdb5eb2531a757de7c59a05f49220
+MD5 (shepplogan.ra) = 0439a1cae4780abb502bbb2b1c7d2bdf
 MD5 (test.ra) = 1dd9f98a0d57ec3c4d8ad50343bd20cd
