@@ -95,6 +95,8 @@ void ra_query  (const char *path);
 //uint8_t ra_type (const char *path);
 int ra_write (ra_t *a, const char *path);
 void ra_free (ra_t *a);
+void ra_convert (ra_t* r, const uint64_t eltype, const uint64_t elbyte);
+void ra_compress (ra_t *r);
 
 #ifdef __cplusplus
 }

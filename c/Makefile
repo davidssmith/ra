@@ -1,6 +1,6 @@
 CC=cc -std=c99
 CFLAGS=-O2 -Wall -g
-LFLAGS= -lpthread #-lblosc -L/usr/local/lib
+LFLAGS= #-lpthread -lblosc -L/usr/local/lib
 
 objects = ra.o
 
