@@ -156,13 +156,13 @@ validate_conversion (const ra_t* r, const uint64_t neweltype, const uint64_t new
     if (neweltype == RA_TYPE_USER) {
         printf("USER-defined type must be handled by the USER. :-)\n");
         exit(EX_USAGE);
-    } else if (r->eltype == RA_TYPE_COMPLEX && neweltype != RA_TYPE_COMPLEX) {
-        printf("Warning: converting complex to non-complex types may discard information.\n");
-    } else if (newelbyte == r->elbyte && neweltype == r->eltype) {
-        printf("Specified type is already the type of the source. Nothing to be done.\n");
-        exit(EX_OK);
-    } else if (newelbyte < r->elbyte && r->eltype != RA_TYPE_INT && r->eltype != RA_TYPE_UINT)
-        printf("Warning: reducing type size may cause loss of precision.\n");
+    } //else if (r->eltype == RA_TYPE_COMPLEX && neweltype != RA_TYPE_COMPLEX) {
+      //  printf("Warning: converting complex to non-complex types may discard information.\n");
+    //} else if (newelbyte == r->elbyte && neweltype == r->eltype) {
+    //    printf("Specified type is already the type of the source. Nothing to be done.\n");
+    //    exit(EX_OK);
+   //else if (newelbyte < r->elbyte && r->eltype != RA_TYPE_INT && r->eltype != RA_TYPE_UINT)
+      //  printf("Warning: reducing type size may cause loss of precision.\n");
 }
 
 
@@ -353,9 +353,9 @@ ra_convert (ra_t *r, const uint64_t eltype, const uint64_t elbyte)
 uint64_t
 calc_min_elbyte_int (const int64_t max, const int64_t min)
 {
-    printf("min: %d, max: %d\n", min, max);
+    //printf("min: %d, max: %d\n", min, max);
     int minbits_reqd = log2(max);
-    printf("minbits_reqd: %d\n", minbits_reqd);
+    //printf("minbits_reqd: %d\n", minbits_reqd);
     uint64_t m = 8;
     while (m < minbits_reqd)
         m *= 2;
@@ -365,9 +365,9 @@ calc_min_elbyte_int (const int64_t max, const int64_t min)
 uint64_t
 calc_min_elbyte_float (const double max, const double min)
 {
-    printf("min: %g, max: %g\n", min, max);
+    //printf("min: %g, max: %g\n", min, max);
     double dynamic_range = fabs(min/max);
-    printf("dynamic_range: %g\n", dynamic_range);
+    //printf("dynamic_range: %g\n", dynamic_range);
     // if (minbits < 16)
     //     return 2;
     // else if (minbits < 32)
@@ -432,7 +432,6 @@ ra_squash (ra_t *r)
     }
 
     if (min_elbyte < r->elbyte) {
-        printf("Can squash to %u bytes.\n", min_elbyte);
         orig_elbyte = r->elbyte;
         ra_convert(r, r->eltype, min_elbyte);
         //r->flags |= RA_FLAG_SQUASHED;
