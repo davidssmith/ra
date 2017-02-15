@@ -60,7 +60,7 @@ static uint64_t RA_MAGIC_NUMBER = 0x7961727261776172ULL;
 
 /* flags */
 #define RA_FLAG_BIG_ENDIAN  (1ULL<<0)
-#define RA_FLAG_COMPRESSED  (2ULL<<0)
+#define RA_FLAG_SQUASHED  (2ULL<<0)
 
 /* maximum size that read system call can handle */
 #define RA_MAX_BYTES  (1ULL<<31)
@@ -97,6 +97,7 @@ int ra_write (ra_t *a, const char *path);
 void ra_free (ra_t *a);
 void ra_convert (ra_t* r, const uint64_t eltype, const uint64_t elbyte);
 int ra_squash (ra_t *r);
+int ra_diff (const ra_t *a, const ra_t *b);
 
 #ifdef __cplusplus
 }

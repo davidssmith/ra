@@ -59,6 +59,8 @@ ra_query (const char *path)
     printf("---\nname: %s\n", path);
     printf("endian: %s\n", a.flags  & RA_FLAG_BIG_ENDIAN ? "big" : "little");
     printf("type: %s%lld\n", RA_TYPE_NAMES[a.eltype], a.elbyte*8);
+    printf("eltype: %lld\n", a.eltype);
+    printf("elbyte: %lld\n", a.elbyte);
     printf("size: %lld\n", a.size);
     printf("dimension: %lld\n", a.ndims);
     a.dims = (uint64_t*)malloc(a.ndims*sizeof(uint64_t));
@@ -159,9 +161,6 @@ validate_conversion (const ra_t* r, const uint64_t neweltype, const uint64_t new
     } else if (newelbyte == r->elbyte && neweltype == r->eltype) {
         printf("Specified type is already the type of the source. Nothing to be done.\n");
         exit(EX_OK);
-    } else if (r->flags & RA_FLAG_SQUASHED) {
-        printf("Conversion of squashed types is not implemented yet.\n");
-        exit(EX_USAGE);
     } else if (newelbyte < r->elbyte && r->eltype != RA_TYPE_INT && r->eltype != RA_TYPE_UINT)
         printf("Warning: reducing type size may cause loss of precision.\n");
 }
@@ -436,8 +435,24 @@ ra_squash (ra_t *r)
         printf("Can squash to %u bytes.\n", min_elbyte);
         orig_elbyte = r->elbyte;
         ra_convert(r, r->eltype, min_elbyte);
-        r->flags |= RA_FLAG_SQUASHED;
+        //r->flags |= RA_FLAG_SQUASHED;
     }
 
     return min_elbyte != orig_elbyte;
+}
+
+
+int
+ra_diff (const ra_t *a, const ra_t *b)
+{
+    if (a->flags  != b->flags)  return 1;
+    if (a->eltype != b->eltype) return 2;
+    if (a->elbyte != b->elbyte) return 3;
+    if (a->size   != b->size)   return 4;
+    if (a->ndims  != b->ndims)  return 5;
+    for (size_t i = 0; i < a->ndims; ++i)
+        if (a->dims[i] != b->dims[i]) return 6;
+    for (size_t i = 0; i < a->size; ++i)
+        if (a->data[i] != b->data[i]) return 7;
+    return 0;
 }
