@@ -159,8 +159,8 @@ validate_conversion (const ra_t* r, const uint64_t neweltype, const uint64_t new
     } else if (newelbyte == r->elbyte && neweltype == r->eltype) {
         printf("Specified type is already the type of the source. Nothing to be done.\n");
         exit(EX_OK);
-    } else if (r->flags & RA_FLAG_COMPRESSED) {
-        printf("Conversion of compressed types is not implemented yet.\n");
+    } else if (r->flags & RA_FLAG_SQUASHED) {
+        printf("Conversion of squashed types is not implemented yet.\n");
         exit(EX_USAGE);
     } else if (newelbyte < r->elbyte && r->eltype != RA_TYPE_INT && r->eltype != RA_TYPE_UINT)
         printf("Warning: reducing type size may cause loss of precision.\n");
@@ -402,7 +402,7 @@ calc_min_elbyte_float (const double max, const double min)
 
 
 int
-ra_compress (ra_t *r)
+ra_squash (ra_t *r)
 {
     uint64_t nelem = 1, min_elbyte = 8, orig_elbyte = r->elbyte;
     for (uint64_t j = 0; j < r->ndims; ++j)
@@ -433,10 +433,10 @@ ra_compress (ra_t *r)
     }
 
     if (min_elbyte < r->elbyte) {
-        printf("Can compress to %u bytes.\n", min_elbyte);
+        printf("Can squash to %u bytes.\n", min_elbyte);
         orig_elbyte = r->elbyte;
         ra_convert(r, r->eltype, min_elbyte);
-        r->flags |= RA_FLAG_COMPRESSED;
+        r->flags |= RA_FLAG_SQUASHED;
     }
 
     return min_elbyte != orig_elbyte;

@@ -36,11 +36,11 @@ main (int argc, char *argv[])
     ra_t r;
     if (argc > 2) {
         ra_read(&r, argv[1]);
-        if (ra_compress(&r))
+        if (ra_squash(&r))
             ra_write(&r, argv[2]);
     } else if (argc > 1) {
         ra_read(&r, argv[1]);
-        if (ra_compress(&r))
+        if (ra_squash(&r))
             ra_write(&r, argv[1]);
     } else {
         printf("Usage: %s <source.ra> <dest.ra>\n", argv[0]);
