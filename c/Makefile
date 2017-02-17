@@ -26,7 +26,7 @@
 
 
 CC=cc -std=c99
-CFLAGS=-O2 -Wall -g
+CFLAGS=-O2 -Wall -g -lm
 LFLAGS= -lm #-lpthread -lblosc -L/usr/local/lib
 
 objects = ra.o
@@ -34,19 +34,19 @@ objects = ra.o
 all: ra2cfl cfl2ra rahead raconvert rasquash radiff test
 
 test: $(objects) test.o
-	$(CC) $(LFLAGS) $(objects) test.o -o test
+	$(CC) $(objects) test.o -o test $(LFLAGS)
 ra2cfl: $(objects)  ra2cfl.o
-	$(CC) $(LFLAGS) $(objects) ra2cfl.o -o ra2cfl
+	$(CC) $(objects) ra2cfl.o -o ra2cfl $(LFLAGS)
 cfl2ra: $(objects)  cfl2ra.o
-	$(CC) $(LFLAGS) $(objects) cfl2ra.o -o cfl2ra
+	$(CC) $(objects) cfl2ra.o -o cfl2ra $(LFLAGS)
 rahead: $(objects) rahead.o
-	$(CC) $(LFLAGS) $(objects) rahead.o -o rahead
+	$(CC) $(objects) rahead.o -o rahead $(LFLAGS)
 raconvert: $(objects) raconvert.o
-	$(CC) $(LFLAGS) $(objects) raconvert.o -o raconvert
+	$(CC) $(objects) raconvert.o -o raconvert $(LFLAGS)
 rasquash: $(objects) rasquash.o
-	$(CC) $(LFLAGS) $(objects) rasquash.o -o rasquash
+	$(CC) $(objects) rasquash.o -o rasquash $(LFLAGS)
 radiff: $(objects) radiff.o
-	$(CC) $(LFLAGS) $(objects) radiff.o -o radiff
+	$(CC) $(objects) radiff.o -o radiff $(LFLAGS)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@

@@ -84,6 +84,8 @@ static char *RA_TYPE_NAMES[] = {
     "float",
     "complex" };
 
+static char RA_TYPE_CODES[] = { "siufc" };
+
 #ifdef __cplusplus
 extern "C" {
 #endif

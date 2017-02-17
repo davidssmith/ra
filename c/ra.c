@@ -58,7 +58,7 @@ ra_query (const char *path)
     read(fd, &(a.ndims), sizeof(uint64_t));
     printf("---\nname: %s\n", path);
     printf("endian: %s\n", a.flags  & RA_FLAG_BIG_ENDIAN ? "big" : "little");
-    printf("type: %s%lld\n", RA_TYPE_NAMES[a.eltype], a.elbyte*8);
+    printf("type: %c%lld\n", RA_TYPE_CODES[a.eltype], a.elbyte*8);
     printf("eltype: %lld\n", a.eltype);
     printf("elbyte: %lld\n", a.elbyte);
     printf("size: %lld\n", a.size);
@@ -196,6 +196,9 @@ ra_convert (ra_t *r, const uint64_t eltype, const uint64_t elbyte)
 {
     uint64_t j, nelem;
     uint8_t *tmp_data;
+
+    if (r->eltype == eltype && r->elbyte == elbyte) // nothing to do
+        return;
 
     // make sure this conversion will work
     validate_conversion(r, eltype, elbyte);
@@ -354,7 +357,7 @@ uint64_t
 calc_min_elbyte_int (const int64_t max, const int64_t min)
 {
     //printf("min: %d, max: %d\n", min, max);
-    int minbits_reqd = log2(max);
+    int minbits_reqd = log(max)/log(2);
     //printf("minbits_reqd: %d\n", minbits_reqd);
     uint64_t m = 8;
     while (m < minbits_reqd)
