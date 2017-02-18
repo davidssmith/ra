@@ -26,10 +26,10 @@
 
 
 CC=cc -std=c99
-CFLAGS=-O2 -Wall -g -lm
+CFLAGS=-O2 -Wall -g
 LFLAGS= -lm #-lpthread -lblosc -L/usr/local/lib
 
-objects = ra.o
+objects = ra.o float16.o
 
 all: ra2cfl cfl2ra rahead raconvert rasquash radiff test
 

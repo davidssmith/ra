@@ -28,6 +28,7 @@
 #include <math.h>
 #include <sysexits.h>
 #include "ra.h"
+#include "float16.h"
 
 void
 validate_magic (const uint64_t magic)
@@ -166,6 +167,8 @@ validate_conversion (const ra_t* r, const uint64_t neweltype, const uint64_t new
 }
 
 
+
+
 #undef CASE
 #define CASE(TYPE1,BYTE1,TYPE2,BYTE2) \
     (r->eltype == RA_TYPE_##TYPE1 && r->elbyte == BYTE1 && \
@@ -176,62 +179,15 @@ validate_conversion (const ra_t* r, const uint64_t neweltype, const uint64_t new
     TYPE2 *tmp_dst; tmp_dst = (TYPE2 *)tmp_data; \
     for (size_t i = 0; i < nelem; ++i) tmp_dst[i] = tmp_src[i]; }
 
-/* from Julia base
-function f32tof16(::Type{Float32}, val::Float16)
-    local ival::UInt32 = reinterpret(UInt16, val),
-          sign::UInt32 = (ival & 0x8000) >> 15,
-          exp::UInt32  = (ival & 0x7c00) >> 10,
-          sig::UInt32  = (ival & 0x3ff) >> 0,
-          ret::UInt32
+#define CONVERT_TO_F16(TYPE1,TYPE2) { \
+    TYPE1 *tmp_src; tmp_src = (TYPE1 *)r->data; \
+    TYPE2 *tmp_dst; tmp_dst = (TYPE2 *)tmp_data; \
+    for (size_t i = 0; i < nelem; ++i) tmp_dst[i] = f32tof16(tmp_src[i]); }
 
-    if exp == 0
-        if sig == 0
-            sign = sign << 31
-            ret = sign | exp | sig
-        else
-            n_bit = 1
-            bit = 0x0200
-            while (bit & sig) == 0
-                n_bit = n_bit + 1
-                bit = bit >> 1
-            end
-            sign = sign << 31
-            exp = (-14 - n_bit + 127) << 23
-            sig = ((sig & (~bit)) << n_bit) << (23 - 10)
-            ret = sign | exp | sig
-        end
-    elseif exp == 0x1f
-        if sig == 0  # Inf
-            if sign == 0
-                ret = 0x7f800000
-            else
-                ret = 0xff800000
-            end
-        else  # NaN
-            ret = 0x7fc00000 | (sign<<31)
-        end
-    else
-        sign = sign << 31
-        exp  = (exp - 15 + 127) << 23
-        sig  = sig << (23 - 10)
-        ret = sign | exp | sig
-    end
-    return reinterpret(Float32, ret)
-end
-*/
-
-uint16_t
-f32tof16 (const float x)
-{
-    uint32_t fltInt32 = (uint32_t)x;
-    uint16_t fltInt16;
-    fltInt16 = (fltInt32 >> 31) << 5;
-    uint16_t tmp = (fltInt32 >> 23) & 0xff;
-    tmp = (tmp - 0x70) & ((uint32_t)((int32_t)(0x70 - tmp) >> 4) >> 27);
-    fltInt16 = (fltInt16 | tmp) << 10;
-    fltInt16 |= (fltInt32 >> 13) & 0x3ff;
-    return fltInt16;
-}
+#define CONVERT_FROM_F16(TYPE1,TYPE2) { \
+    TYPE1 *tmp_src; tmp_src = (TYPE1 *)r->data; \
+    TYPE2 *tmp_dst; tmp_dst = (TYPE2 *)tmp_data; \
+    for (size_t i = 0; i < nelem; ++i) tmp_dst[i] = f16tof32(tmp_src[i]); }
 
 
 void
@@ -351,6 +307,14 @@ ra_convert (ra_t *r, const uint64_t eltype, const uint64_t elbyte)
         CONVERT(float,double)
     else if CASE(FLOAT,8,FLOAT,4)
         CONVERT(double,float)
+    else if CASE(FLOAT,4,FLOAT,2)
+        CONVERT_TO_F16(float,uint16_t)
+    else if CASE(FLOAT,8,FLOAT,2)
+        CONVERT_TO_F16(double,uint16_t)
+    else if CASE(FLOAT,2,FLOAT,4)
+        CONVERT_FROM_F16(uint16_t,float)
+    else if CASE(FLOAT,2,FLOAT,8)
+        CONVERT_FROM_F16(uint16_t,double)
     else if CASE(COMPLEX,16,COMPLEX,8) {
         nelem *= 2;
         CONVERT(double,float)
@@ -419,7 +383,7 @@ calc_min_elbyte_float (const double max, const double min)
     // else if (minbits < 32)
     //     return 4;
     // else
-        return 8;
+    return 8;
 }
 
 

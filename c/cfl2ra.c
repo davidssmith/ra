@@ -31,8 +31,8 @@
 #include <stdio.h>
 #include <sysexits.h>
 
-#define NAME_MAX 256
-#define LINE_MAX 256
+#define NAME_MAX 256UL
+#define LINE_MAX 256UL
 
 int
 cfl_read (ra_t *a, char* filename)
