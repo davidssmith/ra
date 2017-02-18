@@ -176,9 +176,52 @@ validate_conversion (const ra_t* r, const uint64_t neweltype, const uint64_t new
     TYPE2 *tmp_dst; tmp_dst = (TYPE2 *)tmp_data; \
     for (size_t i = 0; i < nelem; ++i) tmp_dst[i] = tmp_src[i]; }
 
+/* from Julia base
+function f32tof16(::Type{Float32}, val::Float16)
+    local ival::UInt32 = reinterpret(UInt16, val),
+          sign::UInt32 = (ival & 0x8000) >> 15,
+          exp::UInt32  = (ival & 0x7c00) >> 10,
+          sig::UInt32  = (ival & 0x3ff) >> 0,
+          ret::UInt32
+
+    if exp == 0
+        if sig == 0
+            sign = sign << 31
+            ret = sign | exp | sig
+        else
+            n_bit = 1
+            bit = 0x0200
+            while (bit & sig) == 0
+                n_bit = n_bit + 1
+                bit = bit >> 1
+            end
+            sign = sign << 31
+            exp = (-14 - n_bit + 127) << 23
+            sig = ((sig & (~bit)) << n_bit) << (23 - 10)
+            ret = sign | exp | sig
+        end
+    elseif exp == 0x1f
+        if sig == 0  # Inf
+            if sign == 0
+                ret = 0x7f800000
+            else
+                ret = 0xff800000
+            end
+        else  # NaN
+            ret = 0x7fc00000 | (sign<<31)
+        end
+    else
+        sign = sign << 31
+        exp  = (exp - 15 + 127) << 23
+        sig  = sig << (23 - 10)
+        ret = sign | exp | sig
+    end
+    return reinterpret(Float32, ret)
+end
+*/
 
 uint16_t
-float32_to_float16 (const float x)
+f32tof16 (const float x)
 {
     uint32_t fltInt32 = (uint32_t)x;
     uint16_t fltInt16;
