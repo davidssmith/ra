@@ -4,8 +4,7 @@ checkresult () {
   if [ $? -eq 0 ]; then
       echo pass
   else
-      echo fail
-      #exit
+      echo "fail (code: $?)"
   fi
 }
 
@@ -57,6 +56,9 @@ dotest ../data/randu8.ra 2 4
 dotest ../data/randu8.ra 2 8
 dotest ../data/randu32.ra 2 4
 dotest ../data/randu32.ra 2 8
+dotest ../data/randf16.ra 3 4
+dotest ../data/randf16.ra 3 8
+dotest ../data/randf32.ra 3 2
 dotest ../data/randf32.ra 3 4
 dotest ../data/randf32.ra 3 8
 dotest ../data/randc32.ra 4 8

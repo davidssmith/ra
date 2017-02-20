@@ -10,8 +10,16 @@
 
 typedef uint16_t float16;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 float f16tof32 (const float16 val);
-void fill_tables();
+void fill_float16_tables();
 float16 f32tof16 (const float val);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _FLOAT16_H */

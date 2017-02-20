@@ -6,11 +6,17 @@
 #include <inttypes.h>
 #include "float16.h"
 
+static union {
+    float ret;
+    uint32_t retbits; 
+} conv32;
+
 float 
 f16tof32 (const float16 val)
 {
     uint32_t ival, sign, exp, sig, ret;
-    ival = (uint16_t)val;
+    float *retf;
+    ival = val;
     sign = (ival & 0x8000) >> 15;
     exp  = (ival & 0x7c00) >> 10;
     sig  = (ival & 0x3ff) >> 0;
@@ -20,8 +26,8 @@ f16tof32 (const float16 val)
             sign = sign << 31;
             ret = sign | exp | sig;
         } else {
-            int n_bit = 1;
-            int bit = 0x0200;
+            int32_t n_bit = 1;
+            uint32_t bit = 0x0200;
             while ((bit & sig) == 0) {
                 n_bit = n_bit + 1;
                 bit = bit >> 1;
@@ -45,7 +51,8 @@ f16tof32 (const float16 val)
         sig  = sig << (23 - 10);
         ret = sign | exp | sig;
     }
-    return (float)ret;
+    retf = (float*)&ret;
+    return *retf;
 }
 
 //float -> float16 algorithm from:
@@ -57,10 +64,10 @@ static uint8_t shifttable[512];
 
 
 void 
-fill_tables()
+fill_float16_tables()
 {
-    for (int i = 0; i <= 255; ++i) {
-        int e = i - 127;
+    for (int64_t i = 0; i <= 255; ++i) {
+        int64_t e = i - 127;
         if (e < -24)  { // Very small numbers map to zero
             basetable[i|0x000+1] = 0x0000;
             basetable[i|0x100+1] = 0x8000;
@@ -91,20 +98,42 @@ fill_tables()
 }
 
 float16
-f32tof16 (const float val)
+f32tof16 (float val)
 {
-    uint32_t f = (uint32_t)val;
-    int i = (f >> 23) & 0x1ff + 1;
-    uint8_t sh = shifttable[i];
-    f &= 0x007fffff;
-    uint16_t h = basetable[i] + (f >> sh);
+    uint32_t *f = (uint32_t*)&val;
+    int32_t i = (*f >> 23) & 0x1ff + 1;
+    uint32_t sh = shifttable[i];
+    *f &= 0x007fffff;
+    uint16_t h = basetable[i] + (*f >> sh);
     // round
     // NOTE: we maybe should ignore NaNs here, but the payload is
     // getting truncated anyway so "rounding" it might not matter
-    uint32_t nextbit = (f >> (sh-1)) & 1;
+    int32_t nextbit = (*f >> (sh-1)) & 1;
     if (nextbit != 0)
         if ((h&1) == 1 ||  // round halfway to even
-            (f & ((1<<(sh-1))-1)) != 0)  // check lower bits
+            (*f & ((1<<(sh-1))-1)) != 0)  // check lower bits
             h += 1;
-    return (float16)h;
+    return h;
 }
+
+/*
+function convert(::Type{Float16}, val::Float32)
+    f = reinterpret(UInt32, val)
+    i = (f >> 23) & 0x1ff + 1
+    sh = shifttable[i]
+    f &= 0x007fffff
+    h::UInt16 = basetable[i] + (f >> sh)
+    # round
+    # NOTE: we maybe should ignore NaNs here, but the payload is
+    # getting truncated anyway so "rounding" it might not matter
+    nextbit = (f >> (sh-1)) & 1
+    if nextbit != 0
+        if h&1 == 1 ||  # round halfway to even
+            (f & ((1<<(sh-1))-1)) != 0  # check lower bits
+            h += 1
+        end
+    end
+    reinterpret(Float16, h)
+end
+
+*/

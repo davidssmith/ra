@@ -77,6 +77,19 @@ typedef enum {
     RA_TYPE_COMPLEX
 } ra_type;
 
+typedef int8_t   RA_CTYPE_1_1;
+typedef int16_t  RA_CTYPE_1_2;
+typedef int32_t  RA_CTYPE_1_4;
+typedef int64_t  RA_CTYPE_1_8;
+typedef uint8_t  RA_CTYPE_2_1;
+typedef uint16_t RA_CTYPE_2_2;
+typedef uint32_t RA_CTYPE_2_4;
+typedef uint64_t RA_CTYPE_2_8;
+typedef float    RA_CTYPE_3_4;
+typedef double   RA_CTYPE_3_8;
+
+#undef RA_DATA_POINTER(ELTYPE,ELBYTE) (RA_CTYPE_##ELTYPE##_##ELBYTE)
+
 static char *RA_TYPE_NAMES[] = {
     "user",
     "int",
