@@ -182,13 +182,17 @@ validate_conversion (const ra_t* r, const uint64_t neweltype, const uint64_t new
 #define CONVERT_TO_F16(TYPE1,TYPE2) { \
     TYPE1 *tmp_src; tmp_src = (TYPE1 *)r->data; \
     TYPE2 *tmp_dst; tmp_dst = (TYPE2 *)tmp_data; \
-    for (size_t i = 0; i < nelem; ++i) tmp_dst[i] = f32tof16(tmp_src[i]); }
+    for (size_t i = 0; i < nelem; ++i) tmp_dst[i] = float_to_float16(tmp_src[i]); }
 
 #define CONVERT_FROM_F16(TYPE1,TYPE2) { \
     TYPE1 *tmp_src; tmp_src = (TYPE1 *)r->data; \
     TYPE2 *tmp_dst; tmp_dst = (TYPE2 *)tmp_data; \
-    for (size_t i = 0; i < nelem; ++i) tmp_dst[i] = f16tof32(tmp_src[i]); }
+    for (size_t i = 0; i < nelem; ++i) tmp_dst[i] = float16_to_float(tmp_src[i]); }
 
+//float float16_to_float(float16 h);
+//double float16_to_double(float16 h);
+//float16 float_to_float16(float f);
+//float16 double_to_float16(double d);
 
 void
 ra_convert (ra_t *r, const uint64_t eltype, const uint64_t elbyte)
@@ -321,6 +325,9 @@ ra_convert (ra_t *r, const uint64_t eltype, const uint64_t elbyte)
     } else if CASE(COMPLEX,8,COMPLEX,16) {
         nelem *= 2;
         CONVERT(float,double)
+    } else if CASE(COMPLEX,8,COMPLEX,4) {
+        nelem *= 2;
+        CONVERT_TO_F16(float,float16)
     } else if CASE(FLOAT,4,COMPLEX,8) {
         float *tmp_src = (float *)r->data;
         float *tmp_dst = (float *)tmp_data;

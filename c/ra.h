@@ -88,7 +88,7 @@ typedef uint64_t RA_CTYPE_2_8;
 typedef float    RA_CTYPE_3_4;
 typedef double   RA_CTYPE_3_8;
 
-#undef RA_DATA_POINTER(ELTYPE,ELBYTE) (RA_CTYPE_##ELTYPE##_##ELBYTE)
+//#undef RA_DATA_POINTER(ELTYPE,ELBYTE) (RA_CTYPE_##ELTYPE##_##ELBYTE)
 
 static char *RA_TYPE_NAMES[] = {
     "user",
