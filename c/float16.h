@@ -1,25 +1,26 @@
 #ifndef _FLOAT16_H
 #define _FLOAT16_H
+/*
+ * This chooses between 'ties to even' and 'ties away from zero'.
+ */
+#define float16_ROUND_TIES_TO_EVEN 1
 
 /*
- * This was translated from base/float16.jl in the Julia distribution. 
- * License is MIT: http://julialang.org/license
+ ********************************************************************
+ *                   HALF-PRECISION ROUTINES                        *
+ ********************************************************************
  */
-
-#include <inttypes.h>
 
 typedef uint16_t float16;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+float float16_to_float(float16 h);
+double float16_to_double(float16 h);
+float16 float_to_float16(float f);
+float16 double_to_float16(double d);
 
-float f16tof32 (const float16 val);
-void fill_float16_tables();
-float16 f32tof16 (const float val);
-
-#ifdef __cplusplus
-}
-#endif
+uint16_t floatbits_to_halfbits(uint32_t f);
+uint16_t doublebits_to_halfbits(uint64_t d);
+uint32_t float16bits_to_floatbits(uint16_t h);
+uint64_t float16bits_to_doublebits(uint16_t h);
 
 #endif /* _FLOAT16_H */
