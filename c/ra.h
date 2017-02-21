@@ -27,15 +27,7 @@
   SOFTWARE.
 */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <stdint.h>
-#include <assert.h>
-#include <err.h>
-#include <errno.h>
-#include <string.h>
-#include <unistd.h>
-#include <fcntl.h>
 
 
 /*
@@ -56,7 +48,7 @@ typedef struct {
 } ra_t;
 
 
-static uint64_t RA_MAGIC_NUMBER = 0x7961727261776172ULL;
+const uint64_t RA_MAGIC_NUMBER = 0x7961727261776172ULL;
 
 /* flags */
 #define RA_FLAG_BIG_ENDIAN  (1ULL<<0)
@@ -90,14 +82,15 @@ typedef double   RA_CTYPE_3_8;
 
 //#undef RA_DATA_POINTER(ELTYPE,ELBYTE) (RA_CTYPE_##ELTYPE##_##ELBYTE)
 
+/*
 static char *RA_TYPE_NAMES[] = {
     "user",
     "int",
     "uint",
     "float",
     "complex" };
-
-static char RA_TYPE_CODES[] = { "siufc" };
+*/
+const char RA_TYPE_CODES[] = { "siufc" };
 
 #ifdef __cplusplus
 extern "C" {
@@ -117,5 +110,7 @@ int ra_diff (const ra_t *a, const ra_t *b);
 #ifdef __cplusplus
 }
 #endif
+
+
 
 #endif   /* _ra_H */

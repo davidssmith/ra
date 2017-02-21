@@ -27,8 +27,16 @@
   SOFTWARE.
 */
 
-#include "ra.h"
+
+#include <assert.h>
+#include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <sysexits.h>
+#include <unistd.h>
+#include "ra.h"
 
 #define NAME_MAX 256
 
@@ -52,7 +60,7 @@ cfl_write (ra_t *a, char* filename)
 
   uint64_t bufsize = bytesleft < RA_MAX_BYTES ? bytesleft : RA_MAX_BYTES;
   while (bytesleft > 0) {
-      write(fd, data_in_cursor, bufsize);
+      assert(write(fd, data_in_cursor, bufsize) == bufsize);
       data_in_cursor += bufsize / sizeof(uint8_t);
       bytesleft -= bufsize;
   }
@@ -62,7 +70,7 @@ cfl_write (ra_t *a, char* filename)
       err(errno, "unable to open %s for writing", path);
 
   for (int k = 0; k < a->ndims; ++k)
-    fprintf(fp, "%llu ", a->dims[k]);
+    fprintf(fp, "%lu ", a->dims[k]);
   fprintf(fp, "0\n");
   fclose(fp);
   return EX_OK;
