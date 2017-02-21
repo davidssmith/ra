@@ -27,23 +27,31 @@
   SOFTWARE.
 */
 
-#include "ra.h"
+#include <assert.h>
+#include <err.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sysexits.h>
+#include <unistd.h>
 
-#define NAME_MAX 256UL
-#define LINE_MAX 256UL
+#include "ra.h"
+
+static const size_t NAME_MAX = 256UL;
+static const size_t LINE_MAX = 256UL;
 
 int
 cfl_read (ra_t *a, char* filename)
 {
-  char path[NAME_MAX], line[LINE_MAX];
+  char path[NAME_MAX];
+  char *line = NULL;
   snprintf(path, NAME_MAX, "%s.hdr", filename);
   FILE *fp = fopen(path, "r");
   if (fp == NULL)
       err(errno, "unable to open %s for reading", path);
 
-  if (getline(&line, LINE_MAX, fp) != -1) {
+  if (getline(&line, &LINE_MAX, fp) != -1) {
       a->ndims = 0;
       for (int c = 0; c != '\n' && c != '\0'; ++c)
         if (line[c] == ' ')
@@ -70,7 +78,7 @@ cfl_read (ra_t *a, char* filename)
   if (fd == -1)
       err(errno, "unable to open %s for writing", path);
   a->data = malloc(a->size);
-  read(fd, a->data, a->size);
+  assert(read(fd, a->data, a->size) == a->size);
   close(fd);
 
   return EX_OK;

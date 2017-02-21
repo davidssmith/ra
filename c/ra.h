@@ -48,7 +48,7 @@ typedef struct {
 } ra_t;
 
 
-const uint64_t RA_MAGIC_NUMBER = 0x7961727261776172ULL;
+static const uint64_t RA_MAGIC_NUMBER = 0x7961727261776172ULL;
 
 /* flags */
 #define RA_FLAG_BIG_ENDIAN  (1ULL<<0)
@@ -90,7 +90,7 @@ static char *RA_TYPE_NAMES[] = {
     "float",
     "complex" };
 */
-const char RA_TYPE_CODES[] = { "siufc" };
+static const char RA_TYPE_CODES[] = { "siufc" };
 
 #ifdef __cplusplus
 extern "C" {
