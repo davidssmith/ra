@@ -40,6 +40,7 @@ main (int argc, char *argv[])
         elbyte = atoll(argv[2]);
         ra_convert(&r, eltype, elbyte);
     } else {
+        printf("Convert ra file to another elemental type.\n");
         printf("Usage: %s <eltype> <elbyte> <source.ra> <dest.ra>\n", argv[0]);
         exit(EX_USAGE);
     }

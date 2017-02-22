@@ -45,6 +45,7 @@ main (int argc, char *argv[])
         if (ra_squash(&r))
             ra_write(&r, argv[1]);
     } else {
+        printf("Attempt to reduce the elemental type size of an ra file.\n");
         printf("Usage: %s <source.ra> <dest.ra>\n", argv[0]);
         exit(EX_USAGE);
     }

@@ -32,8 +32,10 @@ main (int argc, char *argv[])
 {
     if (argc > 1)
         ra_query(argv[1]);
-    else
+    else {
+        printf("View header of ra file.\n");
         printf("Usage: rahead <file.ra>\n");
+    }
 
     return 0;
 }
