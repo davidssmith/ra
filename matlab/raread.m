@@ -36,6 +36,9 @@ else
 end
 ratype = sprintf('%s%d',ra_type_names{h.eltype+1}, h.elbyte*8);
 data = fread(fd, h.elbyte*prod(h.dims), ratype);
+if ratype == 'float32'
+    data = single(data);
+end
 if wascomplex
     tmp = complex(data(1:2:end), data(2:2:end));
     data = reshape(tmp, h.dims(2:end).');
