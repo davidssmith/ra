@@ -27,15 +27,7 @@
   SOFTWARE.
 */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <stdint.h>
-#include <assert.h>
-#include <err.h>
-#include <errno.h>
-#include <string.h>
-#include <unistd.h>
-#include <fcntl.h>
 
 
 /*
@@ -56,10 +48,11 @@ typedef struct {
 } ra_t;
 
 
-static uint64_t RA_MAGIC_NUMBER = 0x7961727261776172ULL;
+static const uint64_t RA_MAGIC_NUMBER = 0x7961727261776172ULL;
 
 /* flags */
 #define RA_FLAG_BIG_ENDIAN  (1ULL<<0)
+#define RA_FLAG_SQUASHED  (2ULL<<0)
 
 /* maximum size that read system call can handle */
 #define RA_MAX_BYTES  (1ULL<<31)
@@ -76,12 +69,28 @@ typedef enum {
     RA_TYPE_COMPLEX
 } ra_type;
 
+typedef int8_t   RA_CTYPE_1_1;
+typedef int16_t  RA_CTYPE_1_2;
+typedef int32_t  RA_CTYPE_1_4;
+typedef int64_t  RA_CTYPE_1_8;
+typedef uint8_t  RA_CTYPE_2_1;
+typedef uint16_t RA_CTYPE_2_2;
+typedef uint32_t RA_CTYPE_2_4;
+typedef uint64_t RA_CTYPE_2_8;
+typedef float    RA_CTYPE_3_4;
+typedef double   RA_CTYPE_3_8;
+
+//#undef RA_DATA_POINTER(ELTYPE,ELBYTE) (RA_CTYPE_##ELTYPE##_##ELBYTE)
+
+/*
 static char *RA_TYPE_NAMES[] = {
     "user",
     "int",
     "uint",
     "float",
     "complex" };
+*/
+static const char RA_TYPE_CODES[] = { "siufc" };
 
 #ifdef __cplusplus
 extern "C" {
@@ -94,9 +103,14 @@ void ra_query  (const char *path);
 //uint8_t ra_type (const char *path);
 int ra_write (ra_t *a, const char *path);
 void ra_free (ra_t *a);
+void ra_convert (ra_t* r, const uint64_t eltype, const uint64_t elbyte);
+int ra_squash (ra_t *r);
+int ra_diff (const ra_t *a, const ra_t *b);
 
 #ifdef __cplusplus
 }
 #endif
+
+
 
 #endif   /* _ra_H */
