@@ -31,6 +31,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sysexits.h>
 #include <unistd.h>
 
@@ -182,19 +183,19 @@ ra_free (ra_t *a)
 }
 
 
-void 
-ra_reshape (ra_t *r, uint64_t newdims[])
+int
+ra_reshape (ra_t *r, const uint64_t newdims[], const uint64_t ndimsnew) 
 {
-    uint64_t newsize = 1, ndimsnew;
-    ndimsnew = sizeof(newdims) / sizeof(uint64_t);
-
+    uint64_t newsize = 1;
     for (uint64_t k = 0; k < ndimsnew; ++k)
             newsize *= newdims[k];
-    assert(r->size == newsize);
+    assert(r->size == newsize*r->elbyte);
     // if new dims preserve total number of elements, then change the dims 
     r->ndims = ndimsnew;
-    realloc(r->dims, sizeof(newdims));
-    memcpy(r->dims, &newdims, sizeof(newdims));
+    size_t newdimsize = ndimsnew*sizeof(uint64_t);
+    realloc(r->dims, newdimsize);
+    size_t ncopied = memcpy(r->dims, newdims, newdimsize);
+    return ncopied != newdimsize;
 }
 
 
