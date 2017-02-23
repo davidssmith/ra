@@ -184,13 +184,13 @@ ra_free (ra_t *a)
 
 
 int
-ra_reshape (ra_t *r, const uint64_t newdims[], const uint64_t ndimsnew) 
+ra_reshape (ra_t *r, const uint64_t newdims[], const uint64_t ndimsnew)
 {
     uint64_t newsize = 1;
     for (uint64_t k = 0; k < ndimsnew; ++k)
             newsize *= newdims[k];
     assert(r->size == newsize*r->elbyte);
-    // if new dims preserve total number of elements, then change the dims 
+    // if new dims preserve total number of elements, then change the dims
     r->ndims = ndimsnew;
     size_t newdimsize = ndimsnew*sizeof(uint64_t);
     realloc(r->dims, newdimsize);
@@ -243,6 +243,8 @@ union {
 #define CASE(TYPE1,BYTE1,TYPE2,BYTE2) \
     (r->eltype == RA_TYPE_##TYPE1 && r->elbyte == BYTE1 && \
      eltype == RA_TYPE_##TYPE2 && elbyte == BYTE2)
+
+#define DECLARE_TYPED_CPTR(TYPE,BYTE,NAME)  RA_CTYPE_##TYPE##_##BYTE *NAME;
 
 #define CONVERT(TYPE1,TYPE2) { \
     TYPE1 *tmp_src; tmp_src = (TYPE1 *)r->data; \
