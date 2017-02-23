@@ -48,6 +48,7 @@ dotest ../data/randi8.ra 1 1
 dotest ../data/randi8.ra 1 2
 dotest ../data/randi8.ra 1 4
 dotest ../data/randi8.ra 1 8
+dotest ../data/randi8.ra 3 2
 dotest ../data/randi32.ra 1 4
 dotest ../data/randi32.ra 1 8
 dotest ../data/randu8.ra 2 1
