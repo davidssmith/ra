@@ -256,7 +256,7 @@ union {
 #define CONVERT_TO_F16(TYPE1,TYPE2) { \
     TYPE1 *tmp_src; tmp_src = (TYPE1 *)r->data; \
     TYPE2 *tmp_dst; tmp_dst = (TYPE2 *)tmp_data; \
-    for (size_t i = 0; i < nelem; ++i) tmp_dst[i] = float_to_float16(tmp_src[i]); }
+    for (size_t i = 0; i < nelem; ++i) tmp_dst[i] = float_to_float16((float)tmp_src[i]); }
 
 #define CONVERT_FROM_F16(TYPE1,TYPE2) { \
     TYPE1 *tmp_src; tmp_src = (TYPE1 *)r->data; \
@@ -394,13 +394,21 @@ ra_convert (ra_t *r, const uint64_t eltype, const uint64_t elbyte)
         CONVERT(uint64_t,float)
 
     else if CASE(INT,1,FLOAT,2)
-        CONVERT_TO_F16(int8_t,uint16_t)
+        CONVERT_TO_F16(int8_t,float16)
     else if CASE(UINT,1,FLOAT,2)
-        CONVERT_TO_F16(uint8_t,uint16_t)
+        CONVERT_TO_F16(uint8_t,float16)
     else if CASE(INT,2,FLOAT,2)
-        CONVERT_TO_F16(int16_t,uint16_t)
+        CONVERT_TO_F16(int16_t,float16)
     else if CASE(UINT,2,FLOAT,2)
-        CONVERT_TO_F16(uint16_t,uint16_t)
+        CONVERT_TO_F16(uint16_t,float16)
+    else if CASE(FLOAT,2,INT,1)
+        CONVERT_TO_F16(float16,int8_t)
+    else if CASE(FLOAT,2,UINT,1)
+        CONVERT_TO_F16(float16,uint8_t)
+    else if CASE(FLOAT,2,INT,2)
+        CONVERT_TO_F16(float16,int16_t)
+    else if CASE(FLOAT,2,UINT,2)
+        CONVERT_TO_F16(float16,uint16_t)
 
     else if CASE(FLOAT,4,UINT,1)
         CONVERT(float,uint8_t)
@@ -615,6 +623,6 @@ ra_diff (const ra_t *a, const ra_t *b)
     for (size_t i = 0; i < a->ndims; ++i)
         if (a->dims[i] != b->dims[i]) return 6;
     for (size_t i = 0; i < a->size; ++i)
-        if (a->data[i] != b->data[i]) return 7;
+        if (a->data[i] != b->data[i]) { printf(" <<%u %u>> ", a->data[i], b->data[i]); return 7; }
     return 0;
 }
