@@ -35,7 +35,7 @@ def read(filename):
     h = getheader(f)
     h['dims'] = h['dims'][::-1]
     if h['eltype'] == 0:
-        print 'Unable to convert user data. Returning raw byte string.'
+        print('Unable to convert user data. Returning raw byte string.')
         return f.read(h['size'])
     else:
         d = '%s%d' % (dtype_enum_to_name[h['eltype']], h['elbyte']*8)

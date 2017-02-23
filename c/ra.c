@@ -184,13 +184,13 @@ ra_free (ra_t *a)
 
 
 int
-ra_reshape (ra_t *r, const uint64_t newdims[], const uint64_t ndimsnew) 
+ra_reshape (ra_t *r, const uint64_t newdims[], const uint64_t ndimsnew)
 {
     uint64_t newsize = 1;
     for (uint64_t k = 0; k < ndimsnew; ++k)
             newsize *= newdims[k];
     assert(r->size == newsize*r->elbyte);
-    // if new dims preserve total number of elements, then change the dims 
+    // if new dims preserve total number of elements, then change the dims
     r->ndims = ndimsnew;
     size_t newdimsize = ndimsnew*sizeof(uint64_t);
     realloc(r->dims, newdimsize);
@@ -213,7 +213,6 @@ validate_conversion (const ra_t* r, const uint64_t neweltype, const uint64_t new
    //else if (newelbyte < r->elbyte && r->eltype != RA_TYPE_INT && r->eltype != RA_TYPE_UINT)
       //  printf("Warning: reducing type size may cause loss of precision.\n");
 }
-
 
 union {
     double f;
@@ -239,10 +238,15 @@ union {
     char c;
 } t1;
 
+// float x = -3.14f;
+// memcpy(&t4, &x, sizeof(float));
+
 #undef CASE
 #define CASE(TYPE1,BYTE1,TYPE2,BYTE2) \
     (r->eltype == RA_TYPE_##TYPE1 && r->elbyte == BYTE1 && \
      eltype == RA_TYPE_##TYPE2 && elbyte == BYTE2)
+
+#define DECLARE_TYPED_CPTR(TYPE,BYTE,NAME)  RA_CTYPE_##TYPE##_##BYTE *NAME;
 
 #define CONVERT(TYPE1,TYPE2) { \
     TYPE1 *tmp_src; tmp_src = (TYPE1 *)r->data; \
@@ -252,17 +256,12 @@ union {
 #define CONVERT_TO_F16(TYPE1,TYPE2) { \
     TYPE1 *tmp_src; tmp_src = (TYPE1 *)r->data; \
     TYPE2 *tmp_dst; tmp_dst = (TYPE2 *)tmp_data; \
-    for (size_t i = 0; i < nelem; ++i) tmp_dst[i] = float_to_float16(tmp_src[i]); }
+    for (size_t i = 0; i < nelem; ++i) tmp_dst[i] = float_to_float16((float)tmp_src[i]); }
 
 #define CONVERT_FROM_F16(TYPE1,TYPE2) { \
     TYPE1 *tmp_src; tmp_src = (TYPE1 *)r->data; \
     TYPE2 *tmp_dst; tmp_dst = (TYPE2 *)tmp_data; \
     for (size_t i = 0; i < nelem; ++i) tmp_dst[i] = float16_to_float(tmp_src[i]); }
-
-//float float16_to_float(float16 h);
-//double float16_to_double(float16 h);
-//float16 float_to_float16(float f);
-//float16 double_to_float16(double d);
 
 void
 ra_convert (ra_t *r, const uint64_t eltype, const uint64_t elbyte)
@@ -393,6 +392,23 @@ ra_convert (ra_t *r, const uint64_t eltype, const uint64_t elbyte)
         CONVERT(uint32_t,float)
     else if CASE(UINT,8,FLOAT,4)
         CONVERT(uint64_t,float)
+
+    else if CASE(INT,1,FLOAT,2)
+        CONVERT_TO_F16(int8_t,float16)
+    else if CASE(UINT,1,FLOAT,2)
+        CONVERT_TO_F16(uint8_t,float16)
+    else if CASE(INT,2,FLOAT,2)
+        CONVERT_TO_F16(int16_t,float16)
+    else if CASE(UINT,2,FLOAT,2)
+        CONVERT_TO_F16(uint16_t,float16)
+    else if CASE(FLOAT,2,INT,1)
+        CONVERT_FROM_F16(float16,int8_t)
+    else if CASE(FLOAT,2,UINT,1)
+        CONVERT_FROM_F16(float16,uint8_t)
+    else if CASE(FLOAT,2,INT,2)
+        CONVERT_FROM_F16(float16,int16_t)
+    else if CASE(FLOAT,2,UINT,2)
+        CONVERT_FROM_F16(float16,uint16_t)
 
     else if CASE(FLOAT,4,UINT,1)
         CONVERT(float,uint8_t)
@@ -607,6 +623,6 @@ ra_diff (const ra_t *a, const ra_t *b)
     for (size_t i = 0; i < a->ndims; ++i)
         if (a->dims[i] != b->dims[i]) return 6;
     for (size_t i = 0; i < a->size; ++i)
-        if (a->data[i] != b->data[i]) return 7;
+        if (a->data[i] != b->data[i]) { printf(" <<%u %u>> ", a->data[i], b->data[i]); return 7; }
     return 0;
 }
