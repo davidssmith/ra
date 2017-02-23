@@ -31,7 +31,7 @@ LFLAGS= -lm #-lpthread -lblosc -L/usr/local/lib
 
 objects = ra.o float16.o
 
-all: ra2cfl cfl2ra rahead raconvert rasquash radiff test
+all: ra2cfl cfl2ra rahead raconvert rasquash radiff rareshape test
 
 test: $(objects) test.o
 	$(CC) $(objects) test.o -o test $(LFLAGS)
@@ -47,9 +47,11 @@ rasquash: $(objects) rasquash.o
 	$(CC) $(objects) rasquash.o -o rasquash $(LFLAGS)
 radiff: $(objects) radiff.o
 	$(CC) $(objects) radiff.o -o radiff $(LFLAGS)
+rareshape: $(objects) rareshape.o
+	$(CC) $(objects) rareshape.o -o rareshape $(LFLAGS)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f *.o test ra2cfl cfl2ra rahead raconvert rasquash radiff
+	rm -f *.o test ra2cfl cfl2ra rahead raconvert rasquash radiff rareshape

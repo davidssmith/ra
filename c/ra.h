@@ -103,6 +103,7 @@ void ra_query  (const char *path);
 //uint8_t ra_type (const char *path);
 int ra_write (ra_t *a, const char *path);
 void ra_free (ra_t *a);
+void ra_reshape(ra_t *r, uint64_t newdims[]);
 void ra_convert (ra_t* r, const uint64_t eltype, const uint64_t elbyte);
 int ra_squash (ra_t *r);
 int ra_diff (const ra_t *a, const ra_t *b);

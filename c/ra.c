@@ -90,16 +90,16 @@ ra_query (const char *path)
     valid_read(fd, &(a.ndims), sizeof(uint64_t));
     printf("---\nname: %s\n", path);
     printf("endian: %s\n", a.flags  & RA_FLAG_BIG_ENDIAN ? "big" : "little");
-    printf("type: %c%ld\n", RA_TYPE_CODES[a.eltype], a.elbyte*8);
-    printf("eltype: %ld\n", a.eltype);
-    printf("elbyte: %ld\n", a.elbyte);
-    printf("size: %ld\n", a.size);
-    printf("dimension: %ld\n", a.ndims);
+    printf("type: %c%u\n", RA_TYPE_CODES[a.eltype], a.elbyte*8);
+    printf("eltype: %u\n", a.eltype);
+    printf("elbyte: %u\n", a.elbyte);
+    printf("size: %u\n", a.size);
+    printf("dimension: %u\n", a.ndims);
     a.dims = (uint64_t*)malloc(a.ndims*sizeof(uint64_t));
     valid_read(fd, a.dims, a.ndims*sizeof(uint64_t));
     printf("shape:\n");
     for (j = 0; j < a.ndims; ++j)
-        printf("  - %ld\n", a.dims[j]);
+        printf("  - %lu\n", a.dims[j]);
     printf("...\n");
     close(fd);
 }
@@ -182,6 +182,22 @@ ra_free (ra_t *a)
 }
 
 
+void 
+ra_reshape (ra_t *r, uint64_t newdims[])
+{
+    uint64_t newsize = 1, ndimsnew;
+    ndimsnew = sizeof(newdims) / sizeof(uint64_t);
+
+    for (uint64_t k = 0; k < ndimsnew; ++k)
+            newsize *= newdims[k];
+    assert(r->size == newsize);
+    // if new dims preserve total number of elements, then change the dims 
+    r->ndims = ndimsnew;
+    realloc(r->dims, sizeof(newdims));
+    memcpy(r->dims, &newdims, sizeof(newdims));
+}
+
+
 void
 validate_conversion (const ra_t* r, const uint64_t neweltype, const uint64_t newelbyte)
 {
@@ -198,7 +214,29 @@ validate_conversion (const ra_t* r, const uint64_t neweltype, const uint64_t new
 }
 
 
+union {
+    double f;
+    int64_t i;
+    uint64_t u;
+} t8;
 
+union {
+    float f;
+    int32_t i;
+    uint32_t u;
+} t4;
+
+union {
+    float16 f;
+    int16_t i;
+    uint16_t u;
+} t2;
+
+union {
+    int8_t i;
+    uint8_t u;
+    char c;
+} t1;
 
 #undef CASE
 #define CASE(TYPE1,BYTE1,TYPE2,BYTE2) \
