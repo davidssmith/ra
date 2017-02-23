@@ -214,7 +214,6 @@ validate_conversion (const ra_t* r, const uint64_t neweltype, const uint64_t new
       //  printf("Warning: reducing type size may cause loss of precision.\n");
 }
 
-
 union {
     double f;
     int64_t i;
@@ -239,6 +238,9 @@ union {
     char c;
 } t1;
 
+// float x = -3.14f;
+// memcpy(&t4, &x, sizeof(float));
+
 #undef CASE
 #define CASE(TYPE1,BYTE1,TYPE2,BYTE2) \
     (r->eltype == RA_TYPE_##TYPE1 && r->elbyte == BYTE1 && \
@@ -260,11 +262,6 @@ union {
     TYPE1 *tmp_src; tmp_src = (TYPE1 *)r->data; \
     TYPE2 *tmp_dst; tmp_dst = (TYPE2 *)tmp_data; \
     for (size_t i = 0; i < nelem; ++i) tmp_dst[i] = float16_to_float(tmp_src[i]); }
-
-//float float16_to_float(float16 h);
-//double float16_to_double(float16 h);
-//float16 float_to_float16(float f);
-//float16 double_to_float16(double d);
 
 void
 ra_convert (ra_t *r, const uint64_t eltype, const uint64_t elbyte)
