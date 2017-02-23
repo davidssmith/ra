@@ -26,7 +26,7 @@
 
 
 CC=cc -std=c99
-CFLAGS=-O2 -Wall -g
+CFLAGS=-O2 -Wall # -g -fPIC
 LFLAGS= -lm #-lpthread -lblosc -L/usr/local/lib
 
 objects = ra.o float16.o

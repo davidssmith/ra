@@ -82,6 +82,7 @@ main (int argc, char *argv[])
 {
     ra_t a;
     if (argc < 3) {
+      printf("Convert an ra file to a cfl format.\n");
       printf("Usage: ra2cfl <rafile> <cflfile>\n");
       exit(EX_USAGE);
     }
