@@ -47,7 +47,7 @@ main (int argc, char *argv[])
             newdims[k] = atol(argv[k+2]);
             printf("newdims[%d] = %u\n", k, newdims[k]);
         }
-        if (ra_reshape(&r, newdims, ndimsnew) == 0);
+        if (ra_reshape(&r, newdims, ndimsnew) == 0)
             ra_write(&r, argv[1]);
     } else {
         printf("Reshape ra file.\n");
