@@ -214,6 +214,8 @@ validate_conversion (const ra_t* r, const uint64_t neweltype, const uint64_t new
       //  printf("Warning: reducing type size may cause loss of precision.\n");
 }
 
+
+/*
 union {
     double f;
     int64_t i;
@@ -237,6 +239,8 @@ union {
     uint8_t u;
     char c;
 } t1;
+
+*/
 
 // float x = -3.14f;
 // memcpy(&t4, &x, sizeof(float));
