@@ -24,35 +24,18 @@
   SOFTWARE.
 */
 
-#include <math.h>
-#include <sysexits.h>
-#include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include "ra.h"
-
 
 int
 main (int argc, char *argv[])
 {
-    ra_t r;
-    uint64_t *newdims;
-    uint64_t ndimsnew;
-    if (argc > 2) {
-        ra_read(&r, argv[1]);
-        ndimsnew = argc - 2;
-        newdims = (uint64_t*) malloc(ndimsnew*sizeof(uint64_t));
-        for (uint64_t k = 0; k < ndimsnew; ++k) {
-            newdims[k] = atol(argv[k+2]);
-        }
-        if (ra_reshape(&r, newdims, ndimsnew) == 0)
-            ra_write(&r, argv[1]);
+    if (argc > 1) {
+        ra_dims(argv[1]);
     } else {
-        printf("Reshape ra file.\n");
-        printf("Usage: %s file.ra n1 n2 ...\n", argv[0]);
-        exit(EX_USAGE);
+        printf("Print dimensions of ra file.\n");
+        printf("Usage: radims <file.ra>\n");
     }
-    ra_free(&r);
-    free(newdims);
+
     return 0;
 }

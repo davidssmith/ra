@@ -16,10 +16,10 @@ code2type () {
         4) TYPE=c ;;
     esac
     BYTE=$(( 8 * $2))
-}        
-        
+}
 
-dotest () {
+
+test_convert () {
   FILE=$1
   code2type $2 $3
   ORIG_ELTYPE=$(./rahead $FILE | grep eltype | awk '{print $2}')
@@ -32,6 +32,20 @@ dotest () {
   checkresult
 }
 
+test_reshape () {
+  FILE=$1
+  ORIG_DIMS=$(./radims $FILE)
+  ELBYTE=$(./rahead $FILE | grep elbyte | awk '{print $2}')
+  SIZE=$(./rahead $FILE | grep size | awk '{print $2}')
+  NUMEL=$(( $SIZE / $ELBYTE ))
+  printf "RESHAPE $FILE from $ORIG_DIMS to $NUMEL x 1 ... "
+  cp $FILE tmp.ra
+  ./rareshape tmp.ra $NUMEL
+  ./rareshape tmp.ra $ORIG_DIMS
+  ./radiff $FILE tmp.ra
+  checkresult
+  rm -f tmp.ra
+}
 
 printf "SQUASH int ... "
 ORIG_TYPE=$(./rahead ../data/rand100.ra | grep eltype | awk '{print $2}')
@@ -44,28 +58,29 @@ checkresult
 printf "SQUASH float ... "
 echo NOT IMPLEMENTED yet
 
-dotest ../data/randi8.ra 1 1
-dotest ../data/randi8.ra 1 2
-dotest ../data/randi8.ra 1 4
-dotest ../data/randi8.ra 1 8
-dotest ../data/randi8.ra 3 2
-dotest ../data/randi32.ra 1 4
-dotest ../data/randi32.ra 1 8
-dotest ../data/randu8.ra 2 1
-dotest ../data/randu8.ra 2 2
-dotest ../data/randu8.ra 2 4
-dotest ../data/randu8.ra 2 8
-dotest ../data/randu8.ra 3 2
-dotest ../data/randu8.ra 3 4
-dotest ../data/randu8.ra 3 8
-dotest ../data/randu32.ra 2 8
-dotest ../data/randf16.ra 3 4
-dotest ../data/randf16.ra 3 8
-dotest ../data/randf32.ra 3 4
-dotest ../data/randf32.ra 3 8
-dotest ../data/randc32.ra 4 8
-dotest ../data/randc32.ra 4 16
+test_convert ../data/randi8.ra 1 1
+test_convert ../data/randi8.ra 1 2
+test_convert ../data/randi8.ra 1 4
+test_convert ../data/randi8.ra 1 8
+test_convert ../data/randi8.ra 3 2
+test_convert ../data/randi32.ra 1 4
+test_convert ../data/randi32.ra 1 8
+test_convert ../data/randu8.ra 2 1
+test_convert ../data/randu8.ra 2 2
+test_convert ../data/randu8.ra 2 4
+test_convert ../data/randu8.ra 2 8
+test_convert ../data/randu8.ra 3 2
+test_convert ../data/randu8.ra 3 4
+test_convert ../data/randu8.ra 3 8
+test_convert ../data/randu32.ra 2 8
+test_convert ../data/randf16.ra 3 4
+test_convert ../data/randf16.ra 3 8
+test_convert ../data/randf32.ra 3 4
+test_convert ../data/randf32.ra 3 8
+test_convert ../data/randc32.ra 4 8
+test_convert ../data/randc32.ra 4 16
 
+test_reshape ../data/randc32.ra
 
 # clean up
 rm -f tmp.ra tmp2.ra
