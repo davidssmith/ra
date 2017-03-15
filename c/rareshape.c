@@ -47,12 +47,12 @@ main (int argc, char *argv[])
         }
         if (ra_reshape(&r, newdims, ndimsnew) == 0)
             ra_write(&r, argv[1]);
+        ra_free(&r);
+        free(newdims);
     } else {
-        printf("Reshape ra file.\n");
-        printf("Usage: %s file.ra n1 n2 ...\n", argv[0]);
-        exit(EX_USAGE);
+        fprintf(stderr, "Reshape ra file.\n");
+        fprintf(stderr, "Usage: %s file.ra n1 n2 ...\n", argv[0]);
+        return EX_USAGE;
     }
-    ra_free(&r);
-    free(newdims);
-    return 0;
+    return EX_OK;
 }
