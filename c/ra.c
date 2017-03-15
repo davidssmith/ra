@@ -106,6 +106,28 @@ ra_query (const char *path)
     free(a.dims);
 }
 
+
+void
+ra_dims (const char *path)
+{
+    ra_t a;
+    int j, fd;
+    uint64_t magic;
+    fd = open(path, O_RDONLY);
+    if (fd == -1)
+        err(errno, "unable to open output file for writing");
+    valid_read(fd, &magic, sizeof(uint64_t));
+    validate_magic(magic);
+    lseek(fd, 4*sizeof(uint64_t), SEEK_CUR);
+    valid_read(fd, &(a.ndims), sizeof(uint64_t));
+    a.dims = (uint64_t*)malloc(a.ndims*sizeof(uint64_t));
+    valid_read(fd, a.dims, a.ndims*sizeof(uint64_t));
+    for (uint64_t i = 0; i < a.ndims; ++i)
+        printf("%lu ", a.dims[i]);
+    printf("\n");
+}
+
+
 int
 ra_read (ra_t *a, const char *path)
 {
@@ -216,6 +238,8 @@ validate_conversion (const ra_t* r, const uint64_t neweltype, const uint64_t new
       //  printf("Warning: reducing type size may cause loss of precision.\n");
 }
 
+
+/*
 union {
     double f;
     int64_t i;
@@ -239,6 +263,8 @@ union {
     uint8_t u;
     char c;
 } t1;
+
+*/
 
 // float x = -3.14f;
 // memcpy(&t4, &x, sizeof(float));
