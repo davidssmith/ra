@@ -42,9 +42,9 @@ main (int argc, char *argv[])
         ra_read(&r2, argv[2]);
         isdiff = ra_diff(&r1, &r2);
     } else {
-        printf("Compare two ra files.\n");
-        printf("Usage: %s <file1.ra> <file2.ra>\n", argv[0]);
-        exit(EX_USAGE);
+        fprintf(stderr, "Compare two ra files.\n");
+        fprintf(stderr, "Usage: %s <file1.ra> <file2.ra>\n", argv[0]);
+        return EX_USAGE;
     }
     ra_free(&r1);
     ra_free(&r2);

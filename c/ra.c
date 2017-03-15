@@ -103,6 +103,7 @@ ra_query (const char *path)
         printf("  - %lu\n", a.dims[j]);
     printf("...\n");
     close(fd);
+    free(a.dims);
 }
 
 int
@@ -193,7 +194,8 @@ ra_reshape (ra_t *r, const uint64_t newdims[], const uint64_t ndimsnew)
     // if new dims preserve total number of elements, then change the dims
     r->ndims = ndimsnew;
     size_t newdimsize = ndimsnew*sizeof(uint64_t);
-    realloc(r->dims, newdimsize);
+    free(r->dims);
+    r->dims = (uint64_t*)malloc(newdimsize);
     size_t ncopied = memcpy(r->dims, newdims, newdimsize);
     return ncopied != newdimsize;
 }

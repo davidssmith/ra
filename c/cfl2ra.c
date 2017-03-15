@@ -28,8 +28,6 @@
 */
 
 #include <assert.h>
-#include <err.h>
-#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,20 +44,24 @@ cfl_read (ra_t *a, char* filename)
 {
   char path[NAME_MAX];
   char *line = NULL;
+  int ret = EX_OK;
   snprintf(path, NAME_MAX, "%s.hdr", filename);
   FILE *fp = fopen(path, "r");
-  if (fp == NULL)
-      err(errno, "unable to open %s for reading", path);
-
+  if (fp == NULL) {
+      fprintf(stderr, "unable to open %s for reading", path);
+      ret = EX_CANTCREAT;
+      goto done;
+  }
   if (getline(&line, &LINE_MAX, fp) != -1) {
       a->ndims = 0;
       for (int c = 0; c != '\n' && c != '\0'; ++c)
         if (line[c] == ' ')
           a->ndims++;
   } else {
-    err(errno, "unable to parse first line of %s", path);
+    fprintf(stderr, "unable to parse first line of %s", path);
+    ret = EX_DATAERR;
+    goto done;
   }
-  fclose(fp);
 
   a->ndims--;  // to account for trailing 0 dimension
   a->dims = (uint64_t*)malloc(a->ndims*sizeof(uint64_t));
@@ -75,13 +77,19 @@ cfl_read (ra_t *a, char* filename)
   }
   snprintf(path, NAME_MAX, "%s.cfl", filename);
   int fd = open(path, O_RDONLY);
-  if (fd == -1)
-      err(errno, "unable to open %s for writing", path);
+  if (fd == -1) {
+      fprintf(stderr, "unable to open %s for writing", path);
+      ret = EX_CANTCREAT;
+      goto done;
+  }
   a->data = malloc(a->size);
   assert(read(fd, a->data, a->size) == a->size);
   close(fd);
 
-  return EX_OK;
+done:
+  fclose(fp);
+  free(line);
+  return ret;
 }
 
 int
@@ -91,10 +99,11 @@ main (int argc, char *argv[])
     if (argc < 3) {
       printf("Convert a cfl file to ra format.\n");
       printf("Usage: cfl2ra <cflfile> <rafile>\n");
-      exit(EX_USAGE);
+      return EX_USAGE;
     }
-    cfl_read(&a, argv[1]);
-    ra_write(&a, argv[2]);
+    int ret = cfl_read(&a, argv[1]);
+    if (ret == EX_OK)
+        ret = ra_write(&a, argv[2]);
     ra_free(&a);
-    return EX_OK;
+    return ret;
 }

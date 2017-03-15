@@ -29,8 +29,6 @@
 
 
 #include <assert.h>
-#include <err.h>
-#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,16 +42,18 @@ int
 cfl_write (ra_t *a, char* filename)
 {
   if (a->eltype != 4) {
-    printf("Can only convert RA files containing complex floats.\n");
-    exit(EX_DATAERR);
+    fprintf(stderr, "Can only convert RA files containing complex floats.\n");
+    return EX_DATAERR;
   }
-  if (a->elbyte != 8)
+  if (a->elbyte != 8) 
     fprintf(stderr, "Warning: converting double to single will lose precision.\n");
   char path[NAME_MAX];
   snprintf(path, NAME_MAX, "%s.cfl", filename);
   int fd = open(path, O_WRONLY|O_TRUNC|O_CREAT,0644);
-  if (fd == -1)
-      err(errno, "unable to open %s for writing", path);
+  if (fd == -1) {
+      fprintf(stderr, "unable to open %s for writing", path);
+      return EX_CANTCREAT;
+  }
 
   uint64_t bytesleft = a->size;
   uint8_t *data_in_cursor = a->data;
@@ -66,15 +66,15 @@ cfl_write (ra_t *a, char* filename)
   }
   snprintf(path, NAME_MAX, "%s.hdr", filename);
   FILE *fp = fopen(path, "w");
-  if (fp == NULL)
-      err(errno, "unable to open %s for writing", path);
-
+  if (fp == NULL) {
+      fprintf(stderr, "unable to open %s for writing", path);
+      return EX_CANTCREAT;
+  }
   for (int k = 0; k < a->ndims; ++k)
     fprintf(fp, "%lu ", a->dims[k]);
   fprintf(fp, "0\n");
   fclose(fp);
   return EX_OK;
-
 }
 
 int
@@ -87,7 +87,7 @@ main (int argc, char *argv[])
       exit(EX_USAGE);
     }
     ra_read(&a, argv[1]);
-    cfl_write(&a, argv[2]);
+    int ret = cfl_write(&a, argv[2]);
     ra_free(&a);
-    return EX_OK;
+    return ret;
 }

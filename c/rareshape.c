@@ -41,20 +41,20 @@ main (int argc, char *argv[])
     if (argc > 2) {
         ra_read(&r, argv[1]);
         ndimsnew = argc - 2;
-        printf("# of new dims: %u\n", ndimsnew);
+        printf("# of new dims: %lu\n", ndimsnew);
         newdims = (uint64_t*) malloc(ndimsnew*sizeof(uint64_t));
         for (uint64_t k = 0; k < ndimsnew; ++k) {
             newdims[k] = atol(argv[k+2]);
-            printf("newdims[%d] = %u\n", k, newdims[k]);
+            printf("newdims[%lu] = %lu\n", k, newdims[k]);
         }
         if (ra_reshape(&r, newdims, ndimsnew) == 0);
             ra_write(&r, argv[1]);
+        ra_free(&r);
+        free(newdims);
     } else {
-        printf("Reshape ra file.\n");
-        printf("Usage: %s file.ra n1 n2 ...\n", argv[0]);
-        exit(EX_USAGE);
+        fprintf(stderr, "Reshape ra file.\n");
+        fprintf(stderr, "Usage: %s file.ra n1 n2 ...\n", argv[0]);
+        return EX_USAGE;
     }
-    ra_free(&r);
-    free(newdims);
-    return 0;
+    return EX_OK;
 }
