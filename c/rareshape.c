@@ -44,9 +44,13 @@ main (int argc, char *argv[])
         newdims = (uint64_t*) malloc(ndimsnew*sizeof(uint64_t));
         for (uint64_t k = 0; k < ndimsnew; ++k) {
             newdims[k] = atol(argv[k+2]);
+            printf("newdims[%d] = %d\n" ,k,newdims[k]);
         }
-        if (ra_reshape(&r, newdims, ndimsnew) == 0)
+        if (ra_reshape(&r, newdims, ndimsnew) == 0) {
+            // TODO: just write the header if total elements still the same
             ra_write(&r, argv[1]);
+            printf("writing");
+        }
         ra_free(&r);
         free(newdims);
     } else {

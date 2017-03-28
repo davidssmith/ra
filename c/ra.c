@@ -218,8 +218,8 @@ ra_reshape (ra_t *r, const uint64_t newdims[], const uint64_t ndimsnew)
     size_t newdimsize = ndimsnew*sizeof(uint64_t);
     free(r->dims);
     r->dims = (uint64_t*)malloc(newdimsize);
-    size_t ncopied = memcpy(r->dims, newdims, newdimsize);
-    return ncopied != newdimsize;
+    memcpy(r->dims, newdims, newdimsize);
+    return 0;
 }
 
 
