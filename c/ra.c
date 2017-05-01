@@ -633,7 +633,6 @@ ra_squash (ra_t *r)
     if (min_elbyte < r->elbyte) {
         orig_elbyte = r->elbyte;
         ra_convert(r, r->eltype, min_elbyte);
-        //r->flags |= RA_FLAG_SQUASHED;
     }
 
     return min_elbyte != orig_elbyte;
