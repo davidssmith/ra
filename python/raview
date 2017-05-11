@@ -1,0 +1,11 @@
+#!/usr/bin/env python -tt
+
+import matplotlib.pyplot as plt
+from mosaic import mosaic
+import ra
+import sys
+
+data = ra.read(sys.argv[1]).squeeze()
+data = mosaic(abs(data))
+plt.imshow(data, cmap='gray')
+plt.show()
