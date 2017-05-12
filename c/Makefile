@@ -31,7 +31,7 @@ LFLAGS= -lm #-lpthread -lblosc -L/usr/local/lib
 
 objects = ra.o float16.o
 
-all: ra2cfl cfl2ra rahead raconvert rasquash radiff radims rareshape test
+all: ra2cfl cfl2ra rahead raconvert rasquash radiff radims rareshape ratopgm test
 
 test: $(objects) test.o
 	$(CC) $(objects) test.o -o test $(LFLAGS)

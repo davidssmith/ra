@@ -653,3 +653,34 @@ ra_diff (const ra_t *a, const ra_t *b)
         if (a->data[i] != b->data[i]) { printf(" <<%u %u>> ", a->data[i], b->data[i]); return 7; }
     return 0;
 }
+
+void
+ra_export_pgm (const ra_t *a)
+{
+    double datamax, datamin, tmp;
+    assert(a->ndims == 2);
+    printf("P2\n%d %d\n", a->dims[0], a->dims[1]);
+    int maxpix = 255;
+    printf("%d\n", maxval);
+    for (int j = 0; j < a->dims[0]*a->dims[1])
+    {
+        if (a->eltype == RA_TYPE_COMPLEX)
+            tmp = sqrtf(a->data[2*j]a->data[2*j+1]);
+        else
+            tmp = a->data[j];
+        if (j == 0) {
+            datamin = tmp;
+            datamax = tmp;
+        }
+        if (tmp > datamax)
+            datamax = tmp;
+        if (tmp < datamin)
+            datamin = tmp;
+    }
+    for (int j = 0; j < a->dims[0]*a->dims[1])
+    {
+        printf("%d ", (int)((maxpix*(a->data[j] - datamin)) / (datamax - datamin)));
+        if ((j+1) % a->dims[1] == 0) printf("\n");
+    }
+
+}

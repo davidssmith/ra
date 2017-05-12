@@ -2,10 +2,24 @@
 
 import matplotlib.pyplot as plt
 from mosaic import mosaic
+import os
+import png
 import ra
 import sys
 
 data = ra.read(sys.argv[1]).squeeze()
 data = mosaic(abs(data))
-plt.imshow(data, cmap='gray')
-plt.show()
+data = (data - data.min()) / (data.max() - data.min())
+data = data*255
+data = data.astype('int')
+#png.from_array(data, 'L').save('img.png')
+f = open('img.png', 'wb')
+nx, ny = data.shape
+w = png.Writer(nx, ny, greyscale=True)
+w.write(f, data)
+f.close()
+
+#plt.imshow(data, cmap='gray')
+os.system('imgcat img.png')
+#plt.colorbar()
+#plt.show()
