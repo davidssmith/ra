@@ -654,6 +654,7 @@ ra_diff (const ra_t *a, const ra_t *b)
     return 0;
 }
 
+/*
 void
 ra_export_pgm (const ra_t *a)
 {
@@ -684,3 +685,4 @@ ra_export_pgm (const ra_t *a)
     }
 
 }
+*/
