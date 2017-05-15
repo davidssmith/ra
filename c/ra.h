@@ -51,8 +51,10 @@ typedef struct {
 static const uint64_t RA_MAGIC_NUMBER = 0x7961727261776172ULL;
 
 /* flags */
+#define NFLAGS               2
 #define RA_FLAG_BIG_ENDIAN  (1ULL<<0)
 #define RA_FLAG_COMPRESSED  (1ULL<<1)
+#define RA_UNKNOWN_FLAGS    (-(1LL<<NFLAGS))
 
 /* maximum size that read system call can handle */
 #define RA_MAX_BYTES  (1ULL<<31)
