@@ -7,6 +7,7 @@ Example demonstrating showing a, image with a fixed ratio.
 
 import numpy as np
 
+import vispy
 from vispy.util.transforms import ortho
 from vispy import gloo
 from vispy import app
@@ -17,7 +18,7 @@ import sys
 
 data = ra.read(sys.argv[1]).squeeze()
 data = mosaic(abs(data))
-data = (data - data.min()) / (data.max() - data.min())
+#data = (data - data.min()) / (data.max() - data.min())
 I = data.astype(np.float32)
 W, H = I.shape
 
@@ -115,5 +116,6 @@ class Canvas(app.Canvas):
 
 
 if __name__ == '__main__':
+    vispy.use(app='Glfw')
     c = Canvas()
     app.run()
