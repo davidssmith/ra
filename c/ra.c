@@ -139,6 +139,11 @@ ra_read (ra_t *a, const char *path)
     valid_read(fd, &magic, sizeof(uint64_t));
     validate_magic(magic);
     valid_read(fd, &(a->flags), sizeof(uint64_t));
+    if ((a->flags & RA_UNKNOWN_FLAGS) != 0) {
+        fprintf(stderr, "Warning: This RA file must have been written by a newer version of this\n");
+        fprintf(stderr, "code. Correctness of input is not guaranteed. Update your version of the\n");
+        fprintf(stderr, "RawArray package to stop this warning.\n");
+    }
     valid_read(fd, &(a->eltype), sizeof(uint64_t));
     valid_read(fd, &(a->elbyte), sizeof(uint64_t));
     valid_read(fd, &(a->size), sizeof(uint64_t));
