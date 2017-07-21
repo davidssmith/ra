@@ -36,12 +36,13 @@ def read(filename):
     h['dims'] = h['dims'][::-1]
     if h['eltype'] == 0:
         print('Unable to convert user data. Returning raw byte string.')
-        return f.read(h['size'])
+        data = f.read(h['size'])
     else:
         d = '%s%d' % (dtype_enum_to_name[h['eltype']], h['elbyte']*8)
         data = np.fromstring(f.read(h['size']), dtype=np.dtype(d))
         data = data.reshape(h['dims']).transpose()
-        return data
+    f.close()
+    return data
 
 
 def getheader(f):
