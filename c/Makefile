@@ -23,6 +23,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 #
+#
+
+ifeq ($(PREFIX),)
+    PREFIX := /usr/local
+endif
+
 
 
 CC=cc -std=c99
@@ -57,3 +63,14 @@ rareshape: $(objects) rareshape.o
 
 clean:
 	rm -f *.o test ra2cfl cfl2ra rahead raconvert rasquash radiff radims rareshape
+
+install: ra2cfl cfl2ra rahead raconvert rasquash radiff radims rareshape
+	install -m 0755 ra2cfl $(PREFIX)/bin
+	install -m 0755 cfl2ra $(PREFIX)/bin
+	install -m 0755 rahead $(PREFIX)/bin
+	install -m 0755 raconvert $(PREFIX)/bin
+	install -m 0755 rasquash $(PREFIX)/bin
+	install -m 0755 radiff $(PREFIX)/bin
+	install -m 0755 radims $(PREFIX)/bin
+	install -m 0755 rareshape $(PREFIX)/bin
+
