@@ -1,6 +1,6 @@
 def mosaic(img):
     """
-    Create a 2-D mosaic of images from an n-D image. An attempt is made to 
+    Create a 2-D mosaic of images from an n-D image. An attempt is made to
     make the resulting 2-D image as square as possible.
 
     Parameters
@@ -24,9 +24,9 @@ def mosaic(img):
     n = int(floor(sqrt(nz)))  # starting guess for tiling dimensions
     # find largest integer less than or equal to sqrt that evenly divides the
     # number of 2-d images in the n-d image.
-    m = [x for x in xrange(1, n+1) if nz % x == 0]
+    m = [x for x in range(1, n+1) if nz % x == 0]
     m = m[-1]
-    j = nz / m      # figure out the most square dimensions
+    j = nz // m      # figure out the most square dimensions
     n2 = min(j, m)
     n1 = max(j, m)
     M = zeros((nr*n2, nc*n1), dtype=img.dtype)
@@ -42,10 +42,11 @@ def main():
     import scipy.misc
     import matplotlib.pyplot as pl
     import numpy as np
-    img = scipy.misc.lena()
-    nz = 64 
+    img = scipy.misc.face()
+    nz = 64
     n = img.shape[0]
-    img = np.tile(img, [nz, 1, 1])
+    img = np.transpose(np.tile(img, [1, 1, nz]), (2,0,1))
+    print(f'img.shape={img.shape}')
     pl.imshow(mosaic(img), cmap='gray')
     pl.show()
 

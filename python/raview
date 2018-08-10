@@ -11,8 +11,8 @@ import sys
 data = ra.read(sys.argv[1]).squeeze()
 data = mosaic(abs(data))
 #data = mosaic(np.angle(data))
-print 'minimum: ', data.min()
-print 'maximum: ', data.max()
+print('minimum: ', data.min())
+print('maximum: ', data.max())
 
 if len(sys.argv) > 2 and sys.argv[2] == '-l':
     data = np.log(data)
@@ -25,12 +25,12 @@ if a == b:
 data = (data - a) / (b - a)
 data = data*255
 data = data.astype('int')
-print 'minimum: ', a
-print 'maximum: ', b
+print('minimum: ', a)
+print('maximum: ', b)
 #png.from_array(data, 'L').save('img.png')
 f = open('img.png', 'wb')
 nx, ny = data.shape
-print data.shape
+print(data.shape)
 w = png.Writer(ny, nx, greyscale=True)
 w.write(f, data)
 f.close()
