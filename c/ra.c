@@ -111,7 +111,7 @@ void
 ra_dims (const char *path)
 {
     ra_t a;
-    int j, fd;
+    int fd;
     uint64_t magic;
     fd = open(path, O_RDONLY);
     if (fd == -1)
@@ -645,7 +645,7 @@ ra_squash (ra_t *r)
 
 
 int
-ra_diff (const ra_t *a, const ra_t *b)
+ra_diff (const ra_t *a, const ra_t *b, const int diff_type)
 {
     if (a->flags  != b->flags)  return 1;
     if (a->eltype != b->eltype) return 2;
@@ -654,8 +654,32 @@ ra_diff (const ra_t *a, const ra_t *b)
     if (a->ndims  != b->ndims)  return 5;
     for (size_t i = 0; i < a->ndims; ++i)
         if (a->dims[i] != b->dims[i]) return 6;
-    for (size_t i = 0; i < a->size; ++i)
-        if (a->data[i] != b->data[i]) { printf(" <<%u %u>> ", a->data[i], b->data[i]); return 7; }
+    if (diff_type == 0) {
+        for (size_t i = 0; i < a->size; ++i) {
+            if (a->data[i] != b->data[i]) {
+                printf("differ at position %ld: lhs=%u rhs=%u\n", i, a->data[i], b->data[i]);
+                return 7;
+            }
+        }
+    } else if (diff_type == 1) {
+        double norm = 0.0;
+        for (size_t i = 0; i < a->size; ++i) {
+            norm += fabs(a->data[i] - b->data[i]);
+        }
+        norm = sqrtf(norm);
+        printf("L1 distance: %g\n", norm);
+        if (norm > 0.) return 7;
+    } else if (diff_type == 2) {
+        double t, norm = 0.0;
+        for (size_t i = 0; i < a->size; ++i) {
+            t = (a->data[i] - b->data[i]);
+            norm += t*t;
+        }
+        norm = sqrtf(norm);
+        printf("L2 distance: %g\n", norm);
+        if (norm > 0.) return 7;
+    } else
+        error("Unknown diff_type %d\n", diff_type);
     return 0;
 }
 

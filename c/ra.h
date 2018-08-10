@@ -108,7 +108,7 @@ void ra_free (ra_t *a);
 int ra_reshape(ra_t *r, const uint64_t newdims[], const uint64_t ndimsnew);
 void ra_convert (ra_t* r, const uint64_t eltype, const uint64_t elbyte);
 int ra_squash (ra_t *r);
-int ra_diff (const ra_t *a, const ra_t *b);
+int ra_diff (const ra_t *a, const ra_t *b, const int diff_type);
 //void ra_export_pgm (const ra_t *a);
 
 #ifdef __cplusplus
