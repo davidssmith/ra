@@ -18,7 +18,8 @@ import sys
 
 data = ra.read(sys.argv[1]).squeeze()
 data = mosaic(abs(data))
-data = (data - data.min()) / (data.max() - data.min())
+thresh = 0.75
+data = (data - data.min()) / (thresh*data.max() - data.min())
 I = data.astype(np.float32)
 W, H = I.shape
 
