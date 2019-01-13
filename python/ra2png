@@ -1,0 +1,10 @@
+#!/usr/bin/env python3
+import png
+import ra
+import sys
+
+print(sys.argv)
+sys.exit(1)
+
+pixels = ra.read(sys.argv[1])
+png.from_array(pixels, 'L', info={'bitdepth':8}).save(sys.argv[2])
