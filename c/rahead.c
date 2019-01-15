@@ -28,11 +28,12 @@
 #include "ra.h"
 
 int
-main (int argc, char *argv[])
+main(int argc, char *argv[])
 {
     if (argc > 1)
-        ra_query(argv[1]);
-    else {
+        ra_print_header(argv[1]);
+    else
+    {
         printf("View header of ra file.\n");
         printf("Usage: rahead <file.ra>\n");
     }

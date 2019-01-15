@@ -35,7 +35,7 @@ CC=cc -std=c99
 CFLAGS=-O2 -Wall # -g -fPIC
 LFLAGS= -lm #-lpthread -lblosc -L/usr/local/lib
 
-objects = ra.o float16.o
+objects = ra.o
 
 all: ra2cfl cfl2ra rahead raconvert rasquash radiff radims rareshape test
 
@@ -47,10 +47,6 @@ cfl2ra: $(objects)  cfl2ra.o
 	$(CC) $(objects) cfl2ra.o -o cfl2ra $(LFLAGS)
 rahead: $(objects) rahead.o
 	$(CC) $(objects) rahead.o -o rahead $(LFLAGS)
-raconvert: $(objects) raconvert.o
-	$(CC) $(objects) raconvert.o -o raconvert $(LFLAGS)
-rasquash: $(objects) rasquash.o
-	$(CC) $(objects) rasquash.o -o rasquash $(LFLAGS)
 radiff: $(objects) radiff.o
 	$(CC) $(objects) radiff.o -o radiff $(LFLAGS)
 radims: $(objects) radims.o

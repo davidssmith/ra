@@ -33,25 +33,30 @@
 
 
 int
-main (int argc, char *argv[])
+main(int argc, char *argv[])
 {
     ra_t r;
     uint64_t *newdims;
     uint64_t ndimsnew;
-    if (argc > 2) {
+    if (argc > 2)
+    {
         ra_read(&r, argv[1]);
         ndimsnew = argc - 2;
-        newdims = (uint64_t*) malloc(ndimsnew*sizeof(uint64_t));
-        for (uint64_t k = 0; k < ndimsnew; ++k) {
-            newdims[k] = atol(argv[k+2]);
+        newdims = (uint64_t *) malloc(ndimsnew * sizeof(uint64_t));
+        for (uint64_t k = 0; k < ndimsnew; ++k)
+        {
+            newdims[k] = atol(argv[k + 2]);
         }
-        if (ra_reshape(&r, newdims, ndimsnew) == 0) {
+        if (ra_reshape(&r, newdims, ndimsnew) == 0)
+        {
             // TODO: just write the header if total elements still the same
             ra_write(&r, argv[1]);
         }
         ra_free(&r);
         free(newdims);
-    } else {
+    }
+    else
+    {
         fprintf(stderr, "Reshape ra file.\n");
         fprintf(stderr, "Usage: %s file.ra n1 n2 ...\n", argv[0]);
         return EX_USAGE;

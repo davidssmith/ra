@@ -40,66 +40,73 @@ static const size_t NAME_MAX = 256UL;
 static const size_t LINE_MAX = 256UL;
 
 int
-cfl_read (ra_t *a, char* filename)
+cfl_read(ra_t * a, char *filename)
 {
-  char path[NAME_MAX];
-  char *line = NULL;
-  int ret = EX_OK;
-  snprintf(path, NAME_MAX, "%s.hdr", filename);
-  FILE *fp = fopen(path, "r");
-  if (fp == NULL) {
-      fprintf(stderr, "unable to open %s for reading", path);
-      ret = EX_CANTCREAT;
-      goto done;
-  }
-  if (getline(&line, &LINE_MAX, fp) != -1) {
-      a->ndims = 0;
-      for (int c = 0; c != '\n' && c != '\0'; ++c)
-        if (line[c] == ' ')
-          a->ndims++;
-  } else {
-    fprintf(stderr, "unable to parse first line of %s", path);
-    ret = EX_DATAERR;
-    goto done;
-  }
+    char path[NAME_MAX];
+    char *line = NULL;
+    int ret = EX_OK;
+    snprintf(path, NAME_MAX, "%s.hdr", filename);
+    FILE *fp = fopen(path, "r");
+    if (fp == NULL)
+    {
+        fprintf(stderr, "unable to open %s for reading", path);
+        ret = EX_CANTCREAT;
+        goto done;
+    }
+    if (getline(&line, &LINE_MAX, fp) != -1)
+    {
+        a->ndims = 0;
+        for (int c = 0; c != '\n' && c != '\0'; ++c)
+            if (line[c] == ' ')
+                a->ndims++;
+    }
+    else
+    {
+        fprintf(stderr, "unable to parse first line of %s", path);
+        ret = EX_DATAERR;
+        goto done;
+    }
 
-  a->ndims--;  // to account for trailing 0 dimension
-  a->dims = (uint64_t*)malloc(a->ndims*sizeof(uint64_t));
-  a->flags = 0;
-  a->eltype = RA_TYPE_COMPLEX;
-  a->elbyte = 8;
-  a->size = a->elbyte;
-  int i;
-  for (int k = 0; k < a->ndims; ++k) {
-    sscanf(line, "%d", &i);
-    a->dims[k] = i;
-    a->size *= a->dims[k];
-  }
-  snprintf(path, NAME_MAX, "%s.cfl", filename);
-  int fd = open(path, O_RDONLY);
-  if (fd == -1) {
-      fprintf(stderr, "unable to open %s for writing", path);
-      ret = EX_CANTCREAT;
-      goto done;
-  }
-  a->data = malloc(a->size);
-  assert(read(fd, a->data, a->size) == a->size);
-  close(fd);
+    a->ndims--;                 // to account for trailing 0 dimension
+    a->dims = (uint64_t *) malloc(a->ndims * sizeof(uint64_t));
+    a->flags = 0;
+    a->eltype = RA_TYPE_COMPLEX;
+    a->elbyte = 8;
+    a->size = a->elbyte;
+    int i;
+    for (int k = 0; k < a->ndims; ++k)
+    {
+        sscanf(line, "%d", &i);
+        a->dims[k] = i;
+        a->size *= a->dims[k];
+    }
+    snprintf(path, NAME_MAX, "%s.cfl", filename);
+    int fd = open(path, O_RDONLY);
+    if (fd == -1)
+    {
+        fprintf(stderr, "unable to open %s for writing", path);
+        ret = EX_CANTCREAT;
+        goto done;
+    }
+    a->data = malloc(a->size);
+    assert(read(fd, a->data, a->size) == a->size);
+    close(fd);
 
-done:
-  fclose(fp);
-  free(line);
-  return ret;
+  done:
+    fclose(fp);
+    free(line);
+    return ret;
 }
 
 int
-main (int argc, char *argv[])
+main(int argc, char *argv[])
 {
     ra_t a;
-    if (argc < 3) {
-      printf("Convert a cfl file to ra format.\n");
-      printf("Usage: cfl2ra <cflfile> <rafile>\n");
-      return EX_USAGE;
+    if (argc < 3)
+    {
+        printf("Convert a cfl file to ra format.\n");
+        printf("Usage: cfl2ra <cflfile> <rafile>\n");
+        return EX_USAGE;
     }
     int ret = cfl_read(&a, argv[1]);
     if (ret == EX_OK)

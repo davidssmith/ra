@@ -39,52 +39,59 @@
 #define NAME_MAX 256
 
 int
-cfl_write (ra_t *a, char* filename)
+cfl_write(ra_t * a, char *filename)
 {
-  if (a->eltype != 4) {
-    fprintf(stderr, "Can only convert RA files containing complex floats.\n");
-    return EX_DATAERR;
-  }
-  if (a->elbyte != 8) 
-    fprintf(stderr, "Warning: converting double to single will lose precision.\n");
-  char path[NAME_MAX];
-  snprintf(path, NAME_MAX, "%s.cfl", filename);
-  int fd = open(path, O_WRONLY|O_TRUNC|O_CREAT,0644);
-  if (fd == -1) {
-      fprintf(stderr, "unable to open %s for writing", path);
-      return EX_CANTCREAT;
-  }
+    if (a->eltype != 4)
+    {
+        fprintf(stderr,
+            "Can only convert RA files containing complex floats.\n");
+        return EX_DATAERR;
+    }
+    if (a->elbyte != 8)
+        fprintf(stderr,
+            "Warning: converting double to single will lose precision.\n");
+    char path[NAME_MAX];
+    snprintf(path, NAME_MAX, "%s.cfl", filename);
+    int fd = open(path, O_WRONLY | O_TRUNC | O_CREAT, 0644);
+    if (fd == -1)
+    {
+        fprintf(stderr, "unable to open %s for writing", path);
+        return EX_CANTCREAT;
+    }
 
-  uint64_t bytesleft = a->size;
-  uint8_t *data_in_cursor = a->data;
+    uint64_t bytesleft = a->size;
+    uint8_t *data_in_cursor = a->data;
 
-  uint64_t bufsize = bytesleft < RA_MAX_BYTES ? bytesleft : RA_MAX_BYTES;
-  while (bytesleft > 0) {
-      assert(write(fd, data_in_cursor, bufsize) == bufsize);
-      data_in_cursor += bufsize / sizeof(uint8_t);
-      bytesleft -= bufsize;
-  }
-  snprintf(path, NAME_MAX, "%s.hdr", filename);
-  FILE *fp = fopen(path, "w");
-  if (fp == NULL) {
-      fprintf(stderr, "unable to open %s for writing", path);
-      return EX_CANTCREAT;
-  }
-  for (int k = 0; k < a->ndims; ++k)
-    fprintf(fp, "%lu ", a->dims[k]);
-  fprintf(fp, "0\n");
-  fclose(fp);
-  return EX_OK;
+    uint64_t bufsize = bytesleft < RA_MAX_BYTES ? bytesleft : RA_MAX_BYTES;
+    while (bytesleft > 0)
+    {
+        assert(write(fd, data_in_cursor, bufsize) == bufsize);
+        data_in_cursor += bufsize / sizeof(uint8_t);
+        bytesleft -= bufsize;
+    }
+    snprintf(path, NAME_MAX, "%s.hdr", filename);
+    FILE *fp = fopen(path, "w");
+    if (fp == NULL)
+    {
+        fprintf(stderr, "unable to open %s for writing", path);
+        return EX_CANTCREAT;
+    }
+    for (int k = 0; k < a->ndims; ++k)
+        fprintf(fp, "%lu ", a->dims[k]);
+    fprintf(fp, "0\n");
+    fclose(fp);
+    return EX_OK;
 }
 
 int
-main (int argc, char *argv[])
+main(int argc, char *argv[])
 {
     ra_t a;
-    if (argc < 3) {
-      printf("Convert an ra file to a cfl format.\n");
-      printf("Usage: ra2cfl <rafile> <cflfile>\n");
-      exit(EX_USAGE);
+    if (argc < 3)
+    {
+        printf("Convert an ra file to a cfl format.\n");
+        printf("Usage: ra2cfl <rafile> <cflfile>\n");
+        exit(EX_USAGE);
     }
     ra_read(&a, argv[1]);
     int ret = cfl_write(&a, argv[2]);
