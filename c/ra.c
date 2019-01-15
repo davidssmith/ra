@@ -100,13 +100,13 @@ ra_print_header(const char *path)
 {
     ra_t a = ra_read_header(path);
     printf("[%s]\n", path);
-    printf("endian=%s\n", a.flags & RA_FLAG_BIG_ENDIAN ? "big" : "little");
-    printf("type=%c%lu\n", RA_TYPE_CODES[a.eltype], a.elbyte * 8);
-    printf("eltype=%lu\n", a.eltype);
-    printf("elbyte=%lu\n", a.elbyte);
-    printf("size=%lu\n", a.size);
-    printf("dimension=%lu\n", a.ndims);
-    printf("shape=[");
+    printf("endian = %s\n", a.flags & RA_FLAG_BIG_ENDIAN ? "big" : "little");
+    printf("type = %c%lu\n", RA_TYPE_CODES[a.eltype], a.elbyte * 8);
+    printf("eltype = %lu\n", a.eltype);
+    printf("elbyte = %lu\n", a.elbyte);
+    printf("size = %lu\n", a.size);
+    printf("dimension = %lu\n", a.ndims);
+    printf("shape = [");
     for (int j = 0; j < a.ndims - 1; ++j)
         printf("%lu,", a.dims[j]);
     printf("%lu]\n\n", a.dims[a.ndims - 1]);
