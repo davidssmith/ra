@@ -44,7 +44,7 @@ int
 validate_magic(const uint64_t magic)
 {
     if (magic != RA_MAGIC_NUMBER)
-        err(EX_DATAERR, "Invalid magic: %ul\n", magic);
+        err(EX_DATAERR, "Invalid magic: %lu\n", magic);
     return 1;
 }
 
@@ -73,7 +73,7 @@ ra_valid_open(const char *path)
     uint64_t magic;
     fd = open(path, O_RDONLY);
     if (fd == -1)
-        err(EX_NOINPUT, "unable to open % for writing", path);
+        err(EX_NOINPUT, "unable to open %s for writing", path);
     valid_read(fd, &magic, sizeof(uint64_t));
     validate_magic(magic);
     return fd;
@@ -84,11 +84,11 @@ ra_read_header(const char *path)
 {
     ra_t a;
     int fd = ra_valid_open(path);
-    valid_read(fd, &(a.flags), sizeof uint64_t);
-    valid_read(fd, &(a.eltype), sizeof uint64_t)
-        valid_read(fd, &(a.elbyte), sizeof uint64_t);
-    valid_read(fd, &(a.size), sizeof uint64_t);
-    valid_read(fd, &(a.ndims), sizeof uint64_t);
+    valid_read(fd, &(a.flags), sizeof(uint64_t));
+    valid_read(fd, &(a.eltype), sizeof(uint64_t));
+	valid_read(fd, &(a.elbyte), sizeof(uint64_t));
+    valid_read(fd, &(a.size), sizeof(uint64_t));
+    valid_read(fd, &(a.ndims), sizeof(uint64_t));
     a.dims = (uint64_t *) malloc(a.ndims * sizeof(uint64_t));
     valid_read(fd, a.dims, a.ndims * sizeof(uint64_t));
     close(fd);
@@ -101,16 +101,14 @@ ra_print_header(const char *path)
     ra_t a = ra_read_header(path);
     printf("[%s]\n", path);
     printf("endian=%s\n", a.flags & RA_FLAG_BIG_ENDIAN ? "big" : "little");
-    printf("type=%c%u\n", RA_TYPE_CODES[a.eltype], a.elbyte * 8);
-    printf("eltype=%u\n", a.eltype);
-    printf("elbyte=%u\n", a.elbyte);
-    printf("size=%u\n", a.size);
-    printf("dimension=%u\n", a.ndims);
-    a.dims = (uint64_t *) malloc(a.ndims * sizeof(uint64_t));
-    valid_read(fd, a.dims, a.ndims * sizeof(uint64_t));
-    printf("shape=[\n");
-    for (j = 0; j < a.ndims - 1; ++j)
-        printf("%lu, \n", a.dims[j]);
+    printf("type=%c%lu\n", RA_TYPE_CODES[a.eltype], a.elbyte * 8);
+    printf("eltype=%lu\n", a.eltype);
+    printf("elbyte=%lu\n", a.elbyte);
+    printf("size=%lu\n", a.size);
+    printf("dimension=%lu\n", a.ndims);
+    printf("shape=[");
+    for (int j = 0; j < a.ndims - 1; ++j)
+        printf("%lu,", a.dims[j]);
     printf("%lu]\n\n", a.dims[a.ndims - 1]);
 }
 
@@ -162,7 +160,7 @@ ra_dims(const char *path)
     uint64_t ndims;
     int fd = ra_valid_open(path);
     lseek(fd, 4 * sizeof(uint64_t), SEEK_CUR);
-    valid_read(fd, &ndims, sizeof uint64_t);
+    valid_read(fd, &ndims, sizeof(uint64_t));
     dims = (uint64_t *) malloc(ndims * sizeof(uint64_t));
     valid_read(fd, dims, ndims * sizeof(uint64_t));
     return dims;
@@ -172,20 +170,21 @@ void
 ra_print_dims(const char *path)
 {
     uint64_t *dims;
+	uint64_t ndims;
     int fd = ra_valid_open(path);
     lseek(fd, 4 * sizeof(uint64_t), SEEK_CUR);
-    valid_read(fd, &(a.ndims), sizeof(uint64_t));
-    a.dims = (uint64_t *) malloc(a.ndims * sizeof(uint64_t));
-    valid_read(fd, a.dims, a.ndims * sizeof(uint64_t));
-    for (uint64_t i = 0; i < a.ndims; ++i)
-        printf("%lu ", a.dims[i]);
+    valid_read(fd, &ndims, sizeof(uint64_t));
+    dims = (uint64_t *) malloc(ndims * sizeof(uint64_t));
+    valid_read(fd, dims, ndims * sizeof(uint64_t));
+    for (uint64_t i = 0; i < ndims; ++i)
+        printf("%lu ", dims[i]);
     printf("\n");
 }
 
 int
 ra_read(ra_t * a, const char *path)
 {
-    uint64_t bytestoread, bytesleft, magic;
+    uint64_t bytestoread, bytesleft;
     int fd = ra_valid_open(path);
     valid_read(fd, &(a->flags), sizeof(uint64_t));
     if (a->flags & RA_UNKNOWN_FLAGS)
@@ -327,6 +326,6 @@ ra_diff(const ra_t * a, const ra_t * b, const int diff_type)
             return 7;
     }
     else
-        error("Unknown diff_type %d\n", diff_type);
+        err(EX_USAGE, "Unknown diff_type %d\n", diff_type);
     return 0;
 }

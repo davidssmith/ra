@@ -37,7 +37,7 @@ LFLAGS= -lm #-lpthread -lblosc -L/usr/local/lib
 
 objects = ra.o
 
-all: ra2cfl cfl2ra rahead raconvert rasquash radiff radims rareshape test
+all: ra2cfl cfl2ra rahead radiff radims rareshape test
 
 test: $(objects) test.o
 	$(CC) $(objects) test.o -o test $(LFLAGS)
@@ -58,14 +58,12 @@ rareshape: $(objects) rareshape.o
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f *.o test ra2cfl cfl2ra rahead raconvert rasquash radiff radims rareshape
+	rm -f *.o test ra2cfl cfl2ra rahead radiff radims rareshape
 
 install: ra2cfl cfl2ra rahead raconvert rasquash radiff radims rareshape
 	install -m 0755 ra2cfl $(PREFIX)/bin
 	install -m 0755 cfl2ra $(PREFIX)/bin
 	install -m 0755 rahead $(PREFIX)/bin
-	install -m 0755 raconvert $(PREFIX)/bin
-	install -m 0755 rasquash $(PREFIX)/bin
 	install -m 0755 radiff $(PREFIX)/bin
 	install -m 0755 radims $(PREFIX)/bin
 	install -m 0755 rareshape $(PREFIX)/bin

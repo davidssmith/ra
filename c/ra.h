@@ -59,6 +59,19 @@ static const uint64_t RA_MAGIC_NUMBER = 0x7961727261776172ULL;
 /* maximum size that read system call can handle */
 #define RA_MAX_BYTES  (1ULL<<31)
 
+/* elemental types */
+typedef enum {
+    RA_TYPE_USER = 0, /* composite type, with optional elemental size
+                          given by elbyte. User must handle decoding.
+                          Note ras are recursive: a ra can contain
+                          another ra */
+    RA_TYPE_INT,
+    RA_TYPE_UINT,
+    RA_TYPE_FLOAT,
+    RA_TYPE_COMPLEX
+} ra_type;
+
+
 static const char RA_TYPE_CODES[] = { "siufc" };
 
 #ifdef __cplusplus

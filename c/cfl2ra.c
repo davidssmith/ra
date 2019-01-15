@@ -43,7 +43,7 @@ int
 cfl_read(ra_t * a, char *filename)
 {
     char path[NAME_MAX];
-    char *line = NULL;
+    char line[LINE_MAX];
     int ret = EX_OK;
     snprintf(path, NAME_MAX, "%s.hdr", filename);
     FILE *fp = fopen(path, "r");
@@ -53,7 +53,7 @@ cfl_read(ra_t * a, char *filename)
         ret = EX_CANTCREAT;
         goto done;
     }
-    if (getline(&line, &LINE_MAX, fp) != -1)
+    if (fgets(line, LINE_MAX, fp) != NULL)
     {
         a->ndims = 0;
         for (int c = 0; c != '\n' && c != '\0'; ++c)
@@ -68,7 +68,7 @@ cfl_read(ra_t * a, char *filename)
     }
 
     a->ndims--;                 // to account for trailing 0 dimension
-    a->dims = (uint64_t *) malloc(a->ndims * sizeof(uint64_t));
+    a->dims = (uint64_t *)malloc(a->ndims * sizeof(uint64_t));
     a->flags = 0;
     a->eltype = RA_TYPE_COMPLEX;
     a->elbyte = 8;
@@ -94,7 +94,6 @@ cfl_read(ra_t * a, char *filename)
 
   done:
     fclose(fp);
-    free(line);
     return ret;
 }
 

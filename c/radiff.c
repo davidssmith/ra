@@ -58,8 +58,7 @@ main(int argc, char *argv[])
     int c;
     while ((c = getopt(argc, argv, "12h")) != -1)
     {
-        switch (c)
-        {
+        switch (c) {
         case '2':
             diff_type = 2;
             break;
