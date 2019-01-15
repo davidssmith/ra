@@ -35,88 +35,118 @@
 #include <sysexits.h>
 #include <unistd.h>
 
-
 #include "ra.h"
-
-
-void
-validate_magic (const uint64_t magic)
-{
-   if (magic != RA_MAGIC_NUMBER) {
-        fprintf(stderr, "Invalid RA file.\n");
-        exit(EX_DATAERR);
-   }
-}
-
-void
-valid_read(int fd, void *buf, const size_t count)
-{
-    size_t nread = read(fd, buf, count);
-    if (nread != count) {
-        fprintf(stderr, "Read %lu B instead of %lu B.\n", nread, count);
-        exit(EX_IOERR);
-    }
-}
-
-
-void
-valid_write(int fd, const void *buf, const size_t count)
-{
-    size_t nwrote = write(fd, buf, count);
-    if (nwrote != count) {
-        fprintf(stderr, "Wrote %lu B instead of %lu B.\n", nwrote, count);
-        exit(EX_IOERR);
-    }
-}
-
 
 // TODO: extend validation checks to internal consistency
 
-void
-ra_query (const char *path)
+int
+validate_magic (const uint64_t magic)
 {
-    ra_t a;
-    int j, fd;
-    uint64_t magic;
-    fd = open(path, O_RDONLY);
-    if (fd == -1)
-        err(errno, "unable to open output file for writing");
-    valid_read(fd, &magic, sizeof(uint64_t));
-    validate_magic(magic);
-    valid_read(fd, &(a.flags), sizeof(uint64_t));
-    valid_read(fd, &(a.eltype), sizeof(uint64_t));
-    valid_read(fd, &(a.elbyte), sizeof(uint64_t));
-    valid_read(fd, &(a.size), sizeof(uint64_t));
-    valid_read(fd, &(a.ndims), sizeof(uint64_t));
-    printf("---\nname: %s\n", path);
-    printf("endian: %s\n", a.flags  & RA_FLAG_BIG_ENDIAN ? "big" : "little");
-    printf("type: %c%u\n", RA_TYPE_CODES[a.eltype], a.elbyte*8);
-    printf("eltype: %u\n", a.eltype);
-    printf("elbyte: %u\n", a.elbyte);
-    printf("size: %u\n", a.size);
-    printf("dimension: %u\n", a.ndims);
-    a.dims = (uint64_t*)malloc(a.ndims*sizeof(uint64_t));
-    valid_read(fd, a.dims, a.ndims*sizeof(uint64_t));
-    printf("shape:\n");
-    for (j = 0; j < a.ndims; ++j)
-        printf("  - %lu\n", a.dims[j]);
-    printf("...\n");
-    close(fd);
-    free(a.dims);
+   if (magic != RA_MAGIC_NUMBER)
+        err(EX_DATAERR, "Invalid magic: %ul\n", magic);
+   return 1;
+}
+
+size_t
+valid_read(int fd, void *buf, const size_t count)
+{
+    size_t nread = read(fd, buf, count);
+    if (nread != count)
+        err(EX_IOERR, "Read %lu B instead of %lu B.\n", nread, count);
+	return nread;
 }
 
 
-void
-ra_dims (const char *path)
+size_t
+valid_write(int fd, const void *buf, const size_t count)
 {
-    ra_t a;
+    size_t nwrote = write(fd, buf, count);
+    if (nwrote != count)
+        err(EX_IOERR, "Wrote %lu B instead of %lu B.\n", nwrote, count);
+	return nwrote;
+}
+
+
+int 
+ra_valid_open (const char *path)
+{
     int fd;
     uint64_t magic;
     fd = open(path, O_RDONLY);
     if (fd == -1)
-        err(errno, "unable to open output file for writing");
+        err(EX_NOINPUT, "unable to open % for writing", path);
     valid_read(fd, &magic, sizeof(uint64_t));
     validate_magic(magic);
+	return fd;
+}
+
+
+ra_t
+ra_read_header (const char *path)
+{
+    ra_t a;
+    int fd = ra_valid_open(path);
+    valid_read(fd, &(a.flags), sizeof uint64_t);
+    valid_read(fd, &(a.eltype), sizeof uint64_t)
+    valid_read(fd, &(a.elbyte), sizeof uint64_t);
+    valid_read(fd, &(a.size), sizeof uint64_t);
+    valid_read(fd, &(a.ndims), sizeof uint64_t);
+    a.dims = (uint64_t*)malloc(a.ndims*sizeof(uint64_t));
+    valid_read(fd, a.dims, a.ndims*sizeof(uint64_t));
+    close(fd);
+    return a;
+}
+
+
+void
+ra_print_header (const char *path)
+{
+    ra_t a = ra_read_header(path);
+    printf("[%s]\n", path);
+    printf("endian=%s\n", a.flags  & RA_FLAG_BIG_ENDIAN ? "big" : "little");
+    printf("type=%c%u\n", RA_TYPE_CODES[a.eltype], a.elbyte*8);
+    printf("eltype=%u\n", a.eltype);
+    printf("elbyte=%u\n", a.elbyte);
+    printf("size=%u\n", a.size);
+    printf("dimension=%u\n", a.ndims);
+    a.dims = (uint64_t*)malloc(a.ndims*sizeof(uint64_t));
+    valid_read(fd, a.dims, a.ndims*sizeof(uint64_t));
+    printf("shape=[\n");
+    for (j = 0; j < a.ndims-1; ++j)
+        printf("%lu, \n", a.dims[j]);
+	printf("%lu]\n\n", a.dims[a.ndims-1]);
+}
+
+// Introspection of just headers
+ra_t ra_read_header (const char *path);
+void ra_query (const char *path);
+
+uint64_t ra_flags(const char *path);    /* file properties, such as endianness and future capabilities */
+uint64_t ra_eltype(const char *path);   /* enum representing the element type in the array */
+uint64_t ra_elbyte(const char *path);   /* # of bytes in type's canonical representation */
+uint64_t ra_size(const char *path);     /* size of data in bytes (may be compressed: check 'flags') */
+uint64_t ra_ndims(const char *path);    /* number of dimensions in array */
+uint64_t *ra_dims(const char *path);    /* the actual dimensions */
+uint64_t ra_data_offset (const char *path);   /* for mmap purposes */
+
+
+uint64_t 
+ra_get_field (const char *path, const int n)
+{
+    uint64_t val;
+    int fd = ra_valid_open(path);
+    lseek(fd, (n-1)*sizeof(uint64_t), SEEK_CUR);
+    valid_read(fd, &val, sizeof(uint64_t));
+	close(fd);
+	return val;
+}
+
+
+void
+ra_print_dims (const char *path)
+{
+	uint64_t *dims;
+    int fd = ra_valid_open(path);
     lseek(fd, 4*sizeof(uint64_t), SEEK_CUR);
     valid_read(fd, &(a.ndims), sizeof(uint64_t));
     a.dims = (uint64_t*)malloc(a.ndims*sizeof(uint64_t));
@@ -130,13 +160,8 @@ ra_dims (const char *path)
 int
 ra_read (ra_t *a, const char *path)
 {
-    int fd;
     uint64_t bytestoread, bytesleft, magic;
-    fd = open(path, O_RDONLY);
-    if (fd == -1)
-        err(errno, "unable to open output file for writing");
-    valid_read(fd, &magic, sizeof(uint64_t));
-    validate_magic(magic);
+    int fd = ra_valid_open(path);
     valid_read(fd, &(a->flags), sizeof(uint64_t));
     if ((a->flags & RA_UNKNOWN_FLAGS) != 0) {
         fprintf(stderr, "Warning: This RA file must have been written by a newer version of this\n");
