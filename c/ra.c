@@ -38,13 +38,14 @@
 #include "ra.h"
 
 // TODO: extend validation checks to internal consistency
+// TODO: compressed with LEB128?
 
 int
-validate_magic (const uint64_t magic)
+validate_magic(const uint64_t magic)
 {
-   if (magic != RA_MAGIC_NUMBER)
+    if (magic != RA_MAGIC_NUMBER)
         err(EX_DATAERR, "Invalid magic: %ul\n", magic);
-   return 1;
+    return 1;
 }
 
 size_t
@@ -53,9 +54,8 @@ valid_read(int fd, void *buf, const size_t count)
     size_t nread = read(fd, buf, count);
     if (nread != count)
         err(EX_IOERR, "Read %lu B instead of %lu B.\n", nread, count);
-	return nread;
+    return nread;
 }
-
 
 size_t
 valid_write(int fd, const void *buf, const size_t count)
@@ -63,12 +63,11 @@ valid_write(int fd, const void *buf, const size_t count)
     size_t nwrote = write(fd, buf, count);
     if (nwrote != count)
         err(EX_IOERR, "Wrote %lu B instead of %lu B.\n", nwrote, count);
-	return nwrote;
+    return nwrote;
 }
 
-
-int 
-ra_valid_open (const char *path)
+int
+ra_valid_open(const char *path)
 {
     int fd;
     uint64_t magic;
@@ -77,111 +76,139 @@ ra_valid_open (const char *path)
         err(EX_NOINPUT, "unable to open % for writing", path);
     valid_read(fd, &magic, sizeof(uint64_t));
     validate_magic(magic);
-	return fd;
+    return fd;
 }
 
-
 ra_t
-ra_read_header (const char *path)
+ra_read_header(const char *path)
 {
     ra_t a;
     int fd = ra_valid_open(path);
     valid_read(fd, &(a.flags), sizeof uint64_t);
     valid_read(fd, &(a.eltype), sizeof uint64_t)
-    valid_read(fd, &(a.elbyte), sizeof uint64_t);
+        valid_read(fd, &(a.elbyte), sizeof uint64_t);
     valid_read(fd, &(a.size), sizeof uint64_t);
     valid_read(fd, &(a.ndims), sizeof uint64_t);
-    a.dims = (uint64_t*)malloc(a.ndims*sizeof(uint64_t));
-    valid_read(fd, a.dims, a.ndims*sizeof(uint64_t));
+    a.dims = (uint64_t *) malloc(a.ndims * sizeof(uint64_t));
+    valid_read(fd, a.dims, a.ndims * sizeof(uint64_t));
     close(fd);
     return a;
 }
 
-
 void
-ra_print_header (const char *path)
+ra_print_header(const char *path)
 {
     ra_t a = ra_read_header(path);
     printf("[%s]\n", path);
-    printf("endian=%s\n", a.flags  & RA_FLAG_BIG_ENDIAN ? "big" : "little");
-    printf("type=%c%u\n", RA_TYPE_CODES[a.eltype], a.elbyte*8);
+    printf("endian=%s\n", a.flags & RA_FLAG_BIG_ENDIAN ? "big" : "little");
+    printf("type=%c%u\n", RA_TYPE_CODES[a.eltype], a.elbyte * 8);
     printf("eltype=%u\n", a.eltype);
     printf("elbyte=%u\n", a.elbyte);
     printf("size=%u\n", a.size);
     printf("dimension=%u\n", a.ndims);
-    a.dims = (uint64_t*)malloc(a.ndims*sizeof(uint64_t));
-    valid_read(fd, a.dims, a.ndims*sizeof(uint64_t));
+    a.dims = (uint64_t *) malloc(a.ndims * sizeof(uint64_t));
+    valid_read(fd, a.dims, a.ndims * sizeof(uint64_t));
     printf("shape=[\n");
-    for (j = 0; j < a.ndims-1; ++j)
+    for (j = 0; j < a.ndims - 1; ++j)
         printf("%lu, \n", a.dims[j]);
-	printf("%lu]\n\n", a.dims[a.ndims-1]);
+    printf("%lu]\n\n", a.dims[a.ndims - 1]);
 }
 
-// Introspection of just headers
-ra_t ra_read_header (const char *path);
-void ra_query (const char *path);
-
-uint64_t ra_flags(const char *path);    /* file properties, such as endianness and future capabilities */
-uint64_t ra_eltype(const char *path);   /* enum representing the element type in the array */
-uint64_t ra_elbyte(const char *path);   /* # of bytes in type's canonical representation */
-uint64_t ra_size(const char *path);     /* size of data in bytes (may be compressed: check 'flags') */
-uint64_t ra_ndims(const char *path);    /* number of dimensions in array */
-uint64_t *ra_dims(const char *path);    /* the actual dimensions */
-uint64_t ra_data_offset (const char *path);   /* for mmap purposes */
-
-
-uint64_t 
-ra_get_field (const char *path, const int n)
+uint64_t
+ra_get_field(const char *path, const int n)
 {
     uint64_t val;
     int fd = ra_valid_open(path);
-    lseek(fd, (n-1)*sizeof(uint64_t), SEEK_CUR);
+    lseek(fd, (n - 1) * sizeof(uint64_t), SEEK_CUR);
     valid_read(fd, &val, sizeof(uint64_t));
-	close(fd);
-	return val;
+    close(fd);
+    return val;
 }
 
+uint64_t
+ra_flags(const char *path)
+{
+    return ra_get_field(path, 1);
+}
+
+uint64_t
+ra_eltype(const char *path)
+{
+    return ra_get_field(path, 2);
+}
+
+uint64_t
+ra_elbyte(const char *path)
+{
+    return ra_get_field(path, 3);
+}
+
+uint64_t
+ra_size(const char *path)
+{
+    return ra_get_field(path, 4);
+}
+
+uint64_t
+ra_ndims(const char *path)
+{
+    return ra_get_field(path, 5);
+}
+
+uint64_t *
+ra_dims(const char *path)
+{
+    uint64_t *dims;
+    uint64_t ndims;
+    int fd = ra_valid_open(path);
+    lseek(fd, 4 * sizeof(uint64_t), SEEK_CUR);
+    valid_read(fd, &ndims, sizeof uint64_t);
+    dims = (uint64_t *) malloc(ndims * sizeof(uint64_t));
+    valid_read(fd, dims, ndims * sizeof(uint64_t));
+    return dims;
+}
 
 void
-ra_print_dims (const char *path)
+ra_print_dims(const char *path)
 {
-	uint64_t *dims;
+    uint64_t *dims;
     int fd = ra_valid_open(path);
-    lseek(fd, 4*sizeof(uint64_t), SEEK_CUR);
+    lseek(fd, 4 * sizeof(uint64_t), SEEK_CUR);
     valid_read(fd, &(a.ndims), sizeof(uint64_t));
-    a.dims = (uint64_t*)malloc(a.ndims*sizeof(uint64_t));
-    valid_read(fd, a.dims, a.ndims*sizeof(uint64_t));
+    a.dims = (uint64_t *) malloc(a.ndims * sizeof(uint64_t));
+    valid_read(fd, a.dims, a.ndims * sizeof(uint64_t));
     for (uint64_t i = 0; i < a.ndims; ++i)
         printf("%lu ", a.dims[i]);
     printf("\n");
 }
 
-
 int
-ra_read (ra_t *a, const char *path)
+ra_read(ra_t * a, const char *path)
 {
     uint64_t bytestoread, bytesleft, magic;
     int fd = ra_valid_open(path);
     valid_read(fd, &(a->flags), sizeof(uint64_t));
-    if ((a->flags & RA_UNKNOWN_FLAGS) != 0) {
-        fprintf(stderr, "Warning: This RA file must have been written by a newer version of this\n");
-        fprintf(stderr, "code. Correctness of input is not guaranteed. Update your version of the\n");
+    if (a->flags & RA_UNKNOWN_FLAGS)
+    {
+        fprintf(stderr,
+            "Warning: This RA file must have been written by a newer version of this\n");
+        fprintf(stderr,
+            "code. Correctness of input is not guaranteed. Update your version of the\n");
         fprintf(stderr, "RawArray package to stop this warning.\n");
     }
     valid_read(fd, &(a->eltype), sizeof(uint64_t));
     valid_read(fd, &(a->elbyte), sizeof(uint64_t));
     valid_read(fd, &(a->size), sizeof(uint64_t));
     valid_read(fd, &(a->ndims), sizeof(uint64_t));
-    a->dims = (uint64_t*)malloc(a->ndims*sizeof(uint64_t));
-    valid_read(fd, a->dims, a->ndims*sizeof(uint64_t));
+    a->dims = (uint64_t *) malloc(a->ndims * sizeof(uint64_t));
+    valid_read(fd, a->dims, a->ndims * sizeof(uint64_t));
     bytesleft = a->size;
-    // if (a->flags & RA_FLAG_COMPRESSED)
-    //     bytesleft += 16;
-    a->data = (uint8_t*)malloc(bytesleft);
+    a->data = (uint8_t *) malloc(bytesleft);
     if (a->data == NULL)
         err(errno, "unable to allocate memory for data");
     uint8_t *data_cursor = a->data;
-    while (bytesleft > 0) {
+    while (bytesleft > 0)
+    {
         bytestoread = bytesleft < RA_MAX_BYTES ? bytesleft : RA_MAX_BYTES;
         valid_read(fd, data_cursor, bytestoread);
         data_cursor += bytestoread;
@@ -191,15 +218,13 @@ ra_read (ra_t *a, const char *path)
     return 0;
 }
 
-
-
 int
-ra_write (ra_t *a, const char *path)
+ra_write(ra_t * a, const char *path)
 {
     int fd;
     uint64_t bytesleft, bufsize;
     uint8_t *data_in_cursor;
-    fd = open(path, O_WRONLY|O_TRUNC|O_CREAT,0644);
+    fd = open(path, O_WRONLY | O_TRUNC | O_CREAT, 0644);
     if (fd == -1)
         err(errno, "unable to open output file for writing");
     /* write the easy stuff */
@@ -209,14 +234,15 @@ ra_write (ra_t *a, const char *path)
     valid_write(fd, &(a->elbyte), sizeof(uint64_t));
     valid_write(fd, &(a->size), sizeof(uint64_t));
     valid_write(fd, &(a->ndims), sizeof(uint64_t));
-    valid_write(fd, a->dims, a->ndims*sizeof(uint64_t));
+    valid_write(fd, a->dims, a->ndims * sizeof(uint64_t));
 
     bytesleft = a->size;
     // if (a->flags & RA_FLAG_COMPRESSED) bytesleft += 16;
     data_in_cursor = a->data;
 
     bufsize = bytesleft < RA_MAX_BYTES ? bytesleft : RA_MAX_BYTES;
-    while (bytesleft > 0) {
+    while (bytesleft > 0)
+    {
         valid_write(fd, data_in_cursor, bufsize);
         data_in_cursor += bufsize / sizeof(uint8_t);
         bytesleft -= bufsize;
@@ -226,124 +252,81 @@ ra_write (ra_t *a, const char *path)
     return 0;
 }
 
-
 void
-ra_free (ra_t *a)
+ra_free(ra_t * a)
 {
     free(a->dims);
     free(a->data);
 }
 
-
 int
-ra_reshape (ra_t *r, const uint64_t newdims[], const uint64_t ndimsnew)
+ra_reshape(ra_t * r, const uint64_t newdims[], const uint64_t ndimsnew)
 {
     uint64_t newsize = 1;
     for (uint64_t k = 0; k < ndimsnew; ++k)
-            newsize *= newdims[k];
-    assert(r->size == newsize*r->elbyte);
+        newsize *= newdims[k];
+    assert(r->size == newsize * r->elbyte);
     // if new dims preserve total number of elements, then change the dims
     r->ndims = ndimsnew;
-    size_t newdimsize = ndimsnew*sizeof(uint64_t);
+    size_t newdimsize = ndimsnew * sizeof(uint64_t);
     free(r->dims);
-    r->dims = (uint64_t*)malloc(newdimsize);
+    r->dims = (uint64_t *) malloc(newdimsize);
     memcpy(r->dims, newdims, newdimsize);
     return 0;
 }
 
-
-/*
-union {
-    double f;
-    int64_t i;
-    uint64_t u;
-} t8;
-
-union {
-    float f;
-    int32_t i;
-    uint32_t u;
-} t4;
-
-union {
-    float16 f;
-    int16_t i;
-    uint16_t u;
-} t2;
-
-union {
-    int8_t i;
-    uint8_t u;
-    char c;
-} t1;
-
-*/
-
-
-uint64_t
-calc_min_elbyte_int (const int64_t max, const int64_t min)
-{
-    //printf("min: %d, max: %d\n", min, max);
-    int minbits_reqd = log(max)/log(2);
-    //printf("minbits_reqd: %d\n", minbits_reqd);
-    uint64_t m = 8;
-    while (m < minbits_reqd)
-        m *= 2;
-    return m / 8;
-}
-
-uint64_t
-calc_min_elbyte_float (const double max, const double min)
-{
-    //printf("min: %g, max: %g\n", min, max);
-    double dynamic_range = fabs(min/max);
-    //printf("dynamic_range: %g\n", dynamic_range);
-    // if (minbits < 16)
-    //     return 2;
-    // else if (minbits < 32)
-    //     return 4;
-    // else
-    return 8;
-}
-
-
-// TODO: compressed with LEB128?
-
 int
-ra_diff (const ra_t *a, const ra_t *b, const int diff_type)
+ra_diff(const ra_t * a, const ra_t * b, const int diff_type)
 {
-    if (a->flags  != b->flags)  return 1;
-    if (a->eltype != b->eltype) return 2;
-    if (a->elbyte != b->elbyte) return 3;
-    if (a->size   != b->size)   return 4;
-    if (a->ndims  != b->ndims)  return 5;
+    if (a->flags != b->flags)
+        return 1;
+    if (a->eltype != b->eltype)
+        return 2;
+    if (a->elbyte != b->elbyte)
+        return 3;
+    if (a->size != b->size)
+        return 4;
+    if (a->ndims != b->ndims)
+        return 5;
     for (size_t i = 0; i < a->ndims; ++i)
-        if (a->dims[i] != b->dims[i]) return 6;
-    if (diff_type == 0) {
-        for (size_t i = 0; i < a->size; ++i) {
-            if (a->data[i] != b->data[i]) {
-                printf("differ at position %ld: lhs=%u rhs=%u\n", i, a->data[i], b->data[i]);
+        if (a->dims[i] != b->dims[i])
+            return 6;
+    if (diff_type == 0)
+    {
+        for (size_t i = 0; i < a->size; ++i)
+        {
+            if (a->data[i] != b->data[i])
+            {
+                printf("differ at position %ld: lhs=%u rhs=%u\n", i,
+                    a->data[i], b->data[i]);
                 return 7;
             }
         }
-    } else if (diff_type == 1) {
+    }
+    else if (diff_type == 1)
+    {
         double norm = 0.0;
-        for (size_t i = 0; i < a->size; ++i) {
+        for (size_t i = 0; i < a->size; ++i)
             norm += fabs(a->data[i] - b->data[i]);
-        }
         norm = sqrtf(norm);
         printf("L1 distance: %g\n", norm);
-        if (norm > 0.) return 7;
-    } else if (diff_type == 2) {
+        if (norm > 0.)
+            return 7;
+    }
+    else if (diff_type == 2)
+    {
         double t, norm = 0.0;
-        for (size_t i = 0; i < a->size; ++i) {
+        for (size_t i = 0; i < a->size; ++i)
+        {
             t = (a->data[i] - b->data[i]);
-            norm += t*t;
+            norm += t * t;
         }
         norm = sqrtf(norm);
         printf("L2 distance: %g\n", norm);
-        if (norm > 0.) return 7;
-    } else
+        if (norm > 0.)
+            return 7;
+    }
+    else
         error("Unknown diff_type %d\n", diff_type);
     return 0;
 }

@@ -36,15 +36,15 @@
    Additional info can be stored after the data region with no harmful effects.
 */
 typedef struct {
-    uint64_t flags;    /* file properties, such as endianness and future capabilities */
-    uint64_t eltype;   /* enum representing the element type in the array */
-    uint64_t elbyte;   /* # of bytes in type's canonical representation */
-    uint64_t size;     /* size of data in bytes (may be compressed: check 'flags') */
-    uint64_t ndims;    /* number of dimensions in array */
-    uint64_t *dims;    /* the actual dimensions */
-    uint8_t *data;     /* pointer to raw data -- contiguous -- so can mmap if y'ant'ta.
-                          Use chars to handle generic data, since reader can use 'type'
-                          enum to recreate correct pointer cast */
+    uint64_t flags;             /* file properties, such as endianness and future capabilities */
+    uint64_t eltype;            /* enum representing the element type in the array */
+    uint64_t elbyte;            /* # of bytes in type's canonical representation */
+    uint64_t size;              /* size of data in bytes (may be compressed: check 'flags') */
+    uint64_t ndims;             /* number of dimensions in array */
+    uint64_t *dims;             /* the actual dimensions */
+    uint8_t *data;              /* pointer to raw data -- contiguous -- so can mmap if y'ant'ta.
+                                   Use chars to handle generic data, since reader can use 'type'
+                                   enum to recreate correct pointer cast */
 } ra_t;
 
 
@@ -59,26 +59,6 @@ static const uint64_t RA_MAGIC_NUMBER = 0x7961727261776172ULL;
 /* maximum size that read system call can handle */
 #define RA_MAX_BYTES  (1ULL<<31)
 
-/* elemental types */
-typedef enum {
-    RA_TYPE_USER = 0, /* composite type, with optional elemental size
-                          given by elbyte. User must handle decoding.
-                          Note ras are recursive: a ra can contain
-                          another ra */
-    RA_TYPE_INT,
-    RA_TYPE_UINT,
-    RA_TYPE_FLOAT,
-    RA_TYPE_COMPLEX
-} ra_type;
-
-/*
-static char *RA_TYPE_NAMES[] = {
-    "user",
-    "int",
-    "uint",
-    "float",
-    "complex" };
-*/
 static const char RA_TYPE_CODES[] = { "siufc" };
 
 #ifdef __cplusplus
@@ -87,28 +67,24 @@ extern "C" {
 
 
 // Basic functions
-int ra_read  (ra_t *a, const char *path);
-int ra_write (ra_t *a, const char *path);
-void ra_free (ra_t *a);
+int ra_read(ra_t * a, const char *path);
+int ra_write(ra_t * a, const char *path);
+void ra_free(ra_t * a);
 
-// Introspection of just headers
-ra_t ra_read_header (const char *path);
-void ra_query (const char *path);
+ra_t ra_read_header(const char *path);
+void ra_print_header(const char *path);
+uint64_t ra_flags(const char *path);
+uint64_t ra_eltype(const char *path);
+uint64_t ra_elbyte(const char *path);
+uint64_t ra_size(const char *path);
+uint64_t ra_ndims(const char *path);
+uint64_t *ra_dims(const char *path);
+void ra_print_dims(const char *path);
+int ra_reshape(ra_t * r, const uint64_t newdims[], const uint64_t ndimsnew);
+int ra_diff(const ra_t * a, const ra_t * b, const int diff_type);
 
-uint64_t ra_flags(const char *path);    /* file properties, such as endianness and future capabilities */
-uint64_t ra_eltype(const char *path);   /* enum representing the element type in the array */
-uint64_t ra_elbyte(const char *path);   /* # of bytes in type's canonical representation */
-uint64_t ra_size(const char *path);     /* size of data in bytes (may be compressed: check 'flags') */
-uint64_t ra_ndims(const char *path);    /* number of dimensions in array */
-uint64_t *ra_dims(const char *path);    /* the actual dimensions */
-uint64_t ra_data_offset (const char *path);   /* for mmap purposes */
-
-
-// On-disk manipulation
-int ra_reshape(ra_t *r, const uint64_t newdims[], const uint64_t ndimsnew);
 
 #ifdef __cplusplus
 }
 #endif
-
-#endif   /* _RA_H */
+#endif                          /* _RA_H */
