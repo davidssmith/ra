@@ -3,8 +3,7 @@ import png
 import ra
 import sys
 
-print(sys.argv)
-sys.exit(1)
+print(sys.argv[1], ' => ', sys.argv[2])
 
 pixels = ra.read(sys.argv[1])
 png.from_array(pixels, 'L', info={'bitdepth':8}).save(sys.argv[2])
