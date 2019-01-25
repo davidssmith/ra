@@ -23,6 +23,7 @@
   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   SOFTWARE.
 */
+
 #include <err.h>
 #include <fcntl.h>
 #include <math.h>
@@ -37,11 +38,16 @@
 // TODO: extend validation checks to internal consistency
 // TODO: compressed with LEB128?
 
-int
-validate_magic(const uint64_t magic)
+static int
+validate (const ra_t * restrict a)
 {
-    if (magic != RA_MAGIC_NUMBER)
-        err(EX_DATAERR, "Invalid magic: %lu\n", magic);
+    if (a->magic != RA_MAGIC_NUMBER)
+        err(EX_DATAERR, "Invalid magic: %lu\n", a->magic);
+    if (a->flags & RA_UNKNOWN_FLAGS) {
+        fprintf(stderr, "Warning: This RA file must have been written by a newer version of this\n");
+        fprintf(stderr, "code. Correctness of input is not guaranteed. Update your version of the\n");
+        fprintf(stderr, "RawArray package to stop this warning.\n");
+    }
     return 1;
 }
 
@@ -55,7 +61,7 @@ valid_read(int fd, void *buf, const size_t count)
 }
 
 size_t
-valid_write(int fd, const void *buf, const size_t count)
+valid_write (int fd, const void * restrict buf, const size_t count)
 {
     size_t nwrote = write(fd, buf, count);
     if (nwrote != count)
@@ -66,13 +72,9 @@ valid_write(int fd, const void *buf, const size_t count)
 int
 ra_valid_open(const char *path)
 {
-    int fd;
-    uint64_t magic;
-    fd = open(path, O_RDONLY);
+    int fd = open(path, O_RDONLY);
     if (fd == -1)
         err(EX_CANTCREAT, "unable to open %s for writing", path);
-    valid_read(fd, &magic, sizeof(uint64_t));
-    validate_magic(magic);
     return fd;
 }
 
@@ -80,12 +82,8 @@ int
 ra_read_header(ra_t *a, const char *path)
 {
     int fd = ra_valid_open(path);
-    valid_read(fd, a, 5*sizeof(uint64_t));
-    if (a->flags & RA_UNKNOWN_FLAGS) {
-        fprintf(stderr, "Warning: This RA file must have been written by a newer version of this\n");
-        fprintf(stderr, "code. Correctness of input is not guaranteed. Update your version of the\n");
-        fprintf(stderr, "RawArray package to stop this warning.\n");
-    }
+    valid_read(fd, a, 6*sizeof(uint64_t));
+    validate(a);
     a->dims = (uint64_t *) malloc(a->ndims * sizeof(uint64_t));
     valid_read(fd, a->dims, a->ndims * sizeof(uint64_t));
 	return fd;
@@ -124,31 +122,31 @@ ra_get_field(const char *path, const int n)
 uint64_t
 ra_flags(const char *path)
 {
-    return ra_get_field(path, 1);
+    return ra_get_field(path, 2);
 }
 
 uint64_t
 ra_eltype(const char *path)
 {
-    return ra_get_field(path, 2);
+    return ra_get_field(path, 3);
 }
 
 uint64_t
 ra_elbyte(const char *path)
 {
-    return ra_get_field(path, 3);
+    return ra_get_field(path, 4);
 }
 
 uint64_t
 ra_size(const char *path)
 {
-    return ra_get_field(path, 4);
+    return ra_get_field(path, 5);
 }
 
 uint64_t
 ra_ndims(const char *path)
 {
-    return ra_get_field(path, 5);
+    return ra_get_field(path, 6);
 }
 
 uint64_t *
@@ -157,7 +155,7 @@ ra_dims(const char *path)
     uint64_t *dims;
     uint64_t ndims;
     int fd = ra_valid_open(path);
-    lseek(fd, 4 * sizeof(uint64_t), SEEK_CUR);
+    lseek(fd, 5 * sizeof(uint64_t), SEEK_CUR);
     valid_read(fd, &ndims, sizeof(uint64_t));
     dims = (uint64_t *) malloc(ndims * sizeof(uint64_t));
     valid_read(fd, dims, ndims * sizeof(uint64_t));
@@ -170,7 +168,7 @@ ra_print_dims(const char *path)
     uint64_t *dims;
 	uint64_t ndims;
     int fd = ra_valid_open(path);
-    lseek(fd, 4 * sizeof(uint64_t), SEEK_CUR);
+    lseek(fd, 5 * sizeof(uint64_t), SEEK_CUR);
     valid_read(fd, &ndims, sizeof(uint64_t));
     dims = (uint64_t *) malloc(ndims * sizeof(uint64_t));
     valid_read(fd, dims, ndims * sizeof(uint64_t));
@@ -201,7 +199,7 @@ ra_read(ra_t * a, const char *path)
 }
 
 int
-ra_write(ra_t * a, const char *path)
+ra_write(const ra_t * restrict a, const char *path)
 {
     int fd;
     uint64_t bytesleft, bufsize;
@@ -210,8 +208,7 @@ ra_write(ra_t * a, const char *path)
     if (fd == -1)
         err(EX_CANTCREAT, "unable to open output file for writing");
     /* write the easy stuff */
-    valid_write(fd, &RA_MAGIC_NUMBER, sizeof(uint64_t));
-    valid_write(fd, a, 5*sizeof(uint64_t));
+    valid_write(fd, a, 6*sizeof(uint64_t));
     valid_write(fd, a->dims, a->ndims * sizeof(uint64_t));
 
     bytesleft = a->size;

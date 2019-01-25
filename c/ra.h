@@ -36,6 +36,7 @@
    Additional info can be stored after the data region with no harmful effects.
 */
 typedef struct {
+	uint64_t magic; 
     uint64_t flags;             /* file properties, such as endianness and future capabilities */
     uint64_t eltype;            /* enum representing the element type in the array */
     uint64_t elbyte;            /* # of bytes in type's canonical representation */
@@ -81,7 +82,7 @@ extern "C" {
 
 // Basic functions
 int ra_read(ra_t * a, const char *path);
-int ra_write(ra_t * a, const char *path);
+int ra_write(const ra_t * restrict a, const char *path);
 void ra_free(ra_t * a);
 
 int ra_read_header(ra_t *a, const char *path);
