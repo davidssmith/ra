@@ -32,8 +32,8 @@ endif
 
 
 CC=cc -std=c99
-CFLAGS=-O2 -Wall # -g -fPIC
-LFLAGS= -lm #-lpthread -lblosc -L/usr/local/lib
+CFLAGS=-O2 -Wall
+LFLAGS= -lm
 
 objects = ra.o
 
@@ -43,8 +43,8 @@ test: $(objects) test.o
 	$(CC) $(objects) test.o -o test $(LFLAGS)
 timing: $(objects) timing.o
 	$(CC) $(objects) timing.o -o timing $(LFLAGS)
-#h5time: $(objects) hdf5.o
-#	$(CC) $(objects) hdf5.o -o h5time $(LFLAGS)
+h5time: hdf5.o
+	h5cc -O2 hdf5.c -o h5time
 ra2cfl: $(objects)  ra2cfl.o
 	$(CC) $(objects) ra2cfl.o -o ra2cfl $(LFLAGS)
 cfl2ra: $(objects)  cfl2ra.o
