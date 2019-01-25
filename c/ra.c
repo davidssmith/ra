@@ -192,7 +192,7 @@ ra_read(ra_t * a, const char *path)
     uint8_t *data_cursor = a->data;
     while (bytesleft > 0)
     {
-        bytestoread = bytesleft < RA_MAX_BYTES ? bytesleft : RA_MAX_BYTES;
+        bytestoread = bytesleft < RA_MAX_IO_BYTES ? bytesleft : RA_MAX_IO_BYTES;
         valid_read(fd, data_cursor, bytestoread);
         data_cursor += bytestoread;
         bytesleft -= bytestoread;
@@ -211,14 +211,14 @@ ra_write(const ra_t * restrict a, const char *path)
     if (fd == -1)
         err(EX_CANTCREAT, "unable to open output file for writing");
     /* write the easy stuff */
-    valid_write(fd, a, 6*sizeof(uint64_t));
-    valid_write(fd, a->dims, a->ndims * sizeof(uint64_t));
+    valid_write(fd, a, 6*sizeof(uint64_t));   // header
+    valid_write(fd, a->dims, a->ndims * sizeof(uint64_t));  // dims
 
     bytesleft = a->size;
     // if (a->flags & RA_FLAG_COMPRESSED) bytesleft += 16;
     data_in_cursor = a->data;
 
-    bufsize = bytesleft < RA_MAX_BYTES ? bytesleft : RA_MAX_BYTES;
+    bufsize = bytesleft < RA_MAX_IO_BYTES ? bytesleft : RA_MAX_IO_BYTES;
     while (bytesleft > 0)
     {
         valid_write(fd, data_in_cursor, bufsize);
