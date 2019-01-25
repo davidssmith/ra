@@ -84,7 +84,7 @@ int ra_read(ra_t * a, const char *path);
 int ra_write(ra_t * a, const char *path);
 void ra_free(ra_t * a);
 
-ra_t ra_read_header(const char *path);
+int ra_read_header(ra_t *a, const char *path);
 void ra_print_header(const char *path);
 uint64_t ra_flags(const char *path);
 uint64_t ra_eltype(const char *path);

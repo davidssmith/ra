@@ -79,26 +79,27 @@ ra_valid_open(const char *path)
     return fd;
 }
 
-ra_t
-ra_read_header(const char *path)
+int
+ra_read_header(ra_t *a, const char *path)
 {
-    ra_t a;
     int fd = ra_valid_open(path);
-    valid_read(fd, &(a.flags), sizeof(uint64_t));
-    valid_read(fd, &(a.eltype), sizeof(uint64_t));
-	valid_read(fd, &(a.elbyte), sizeof(uint64_t));
-    valid_read(fd, &(a.size), sizeof(uint64_t));
-    valid_read(fd, &(a.ndims), sizeof(uint64_t));
-    a.dims = (uint64_t *) malloc(a.ndims * sizeof(uint64_t));
-    valid_read(fd, a.dims, a.ndims * sizeof(uint64_t));
-    close(fd);
-    return a;
+    valid_read(fd, a, 5*sizeof(uint64_t));
+    if (a->flags & RA_UNKNOWN_FLAGS) {
+        fprintf(stderr, "Warning: This RA file must have been written by a newer version of this\n");
+        fprintf(stderr, "code. Correctness of input is not guaranteed. Update your version of the\n");
+        fprintf(stderr, "RawArray package to stop this warning.\n");
+    }
+    a->dims = (uint64_t *) malloc(a->ndims * sizeof(uint64_t));
+    valid_read(fd, a->dims, a->ndims * sizeof(uint64_t));
+	return fd;
 }
 
 void
 ra_print_header(const char *path)
 {
-    ra_t a = ra_read_header(path);
+    ra_t a;
+	int fd = ra_read_header(&a, path);
+	close(fd);
     printf("[%s]\n", path);
     printf("endian = %s\n", a.flags & RA_FLAG_BIG_ENDIAN ? "big" : "little");
     printf("type = %c%lu\n", RA_TYPE_CODES[a.eltype], a.elbyte * 8);
@@ -185,26 +186,7 @@ int
 ra_read(ra_t * a, const char *path)
 {
     uint64_t bytestoread, bytesleft;
-    int fd = ra_valid_open(path);
-#ifdef OLD
-    valid_read(fd, &(a->flags), sizeof(uint64_t));
-    valid_read(fd, &(a->eltype), sizeof(uint64_t));
-    valid_read(fd, &(a->elbyte), sizeof(uint64_t));
-    valid_read(fd, &(a->size), sizeof(uint64_t));
-    valid_read(fd, &(a->ndims), sizeof(uint64_t));
-#else
-    valid_read(fd, a, 5*sizeof(uint64_t));
-#endif
-    if (a->flags & RA_UNKNOWN_FLAGS)
-    {
-        fprintf(stderr,
-            "Warning: This RA file must have been written by a newer version of this\n");
-        fprintf(stderr,
-            "code. Correctness of input is not guaranteed. Update your version of the\n");
-        fprintf(stderr, "RawArray package to stop this warning.\n");
-    }
-    a->dims = (uint64_t *) malloc(a->ndims * sizeof(uint64_t));
-    valid_read(fd, a->dims, a->ndims * sizeof(uint64_t));
+    int fd = ra_read_header(a, path);
     bytesleft = a->size;
     a->data = (uint8_t *) malloc(bytesleft);
     if (a->data == NULL)
@@ -232,15 +214,7 @@ ra_write(ra_t * a, const char *path)
         err(errno, "unable to open output file for writing");
     /* write the easy stuff */
     valid_write(fd, &RA_MAGIC_NUMBER, sizeof(uint64_t));
-#ifdef OLD
-    valid_write(fd, &(a->flags), sizeof(uint64_t));
-    valid_write(fd, &(a->eltype), sizeof(uint64_t));
-    valid_write(fd, &(a->elbyte), sizeof(uint64_t));
-    valid_write(fd, &(a->size), sizeof(uint64_t));
-    valid_write(fd, &(a->ndims), sizeof(uint64_t));
-#else
     valid_write(fd, a, 5*sizeof(uint64_t));
-#endif
     valid_write(fd, a->dims, a->ndims * sizeof(uint64_t));
 
     bytesleft = a->size;
