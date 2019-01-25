@@ -60,7 +60,7 @@ rareshape: $(objects) rareshape.o
 clean:
 	rm -f *.o test ra2cfl cfl2ra rahead radiff radims rareshape
 
-install: ra2cfl cfl2ra rahead raconvert rasquash radiff radims rareshape
+install: ra2cfl cfl2ra rahead radiff radims rareshape
 	install -m 0755 ra2cfl $(PREFIX)/bin
 	install -m 0755 cfl2ra $(PREFIX)/bin
 	install -m 0755 rahead $(PREFIX)/bin
