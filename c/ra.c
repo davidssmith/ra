@@ -70,7 +70,7 @@ ra_valid_open(const char *path)
     uint64_t magic;
     fd = open(path, O_RDONLY);
     if (fd == -1)
-        err(EX_NOINPUT, "unable to open %s for writing", path);
+        err(EX_CANTCREAT, "unable to open %s for writing", path);
     valid_read(fd, &magic, sizeof(uint64_t));
     validate_magic(magic);
     return fd;
