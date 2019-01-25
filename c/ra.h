@@ -6,7 +6,7 @@
 
   The MIT License (MIT)
 
-  Copyright (c) 2015 David Smith
+  Copyright (c) 2015-2019 David Smith
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
@@ -36,22 +36,23 @@
    Additional info can be stored after the data region with no harmful effects.
 */
 typedef struct {
-    uint64_t flags;    /* file properties, such as endianness and future capabilities */
-    uint64_t eltype;   /* enum representing the element type in the array */
-    uint64_t elbyte;   /* # of bytes in type's canonical representation */
-    uint64_t size;     /* size of data in bytes (may be compressed: check 'flags') */
-    uint64_t ndims;    /* number of dimensions in array */
-    uint64_t *dims;    /* the actual dimensions */
-    uint8_t *data;     /* pointer to raw data -- contiguous -- so can mmap if y'ant'ta.
-                          Use chars to handle generic data, since reader can use 'type'
-                          enum to recreate correct pointer cast */
+	uint64_t magic; 
+    uint64_t flags;             /* file properties, such as endianness and future capabilities */
+    uint64_t eltype;            /* enum representing the element type in the array */
+    uint64_t elbyte;            /* # of bytes in type's canonical representation */
+    uint64_t size;              /* size of data in bytes (may be compressed: check 'flags') */
+    uint64_t ndims;             /* number of dimensions in array */
+    uint64_t *dims;             /* the actual dimensions */
+    uint8_t *data;              /* pointer to raw data -- contiguous -- so can mmap if y'ant'ta.
+                                   Use chars to handle generic data, since reader can use 'type'
+                                   enum to recreate correct pointer cast */
 } ra_t;
 
 
 static const uint64_t RA_MAGIC_NUMBER = 0x7961727261776172ULL;
 
 /* flags */
-#define NFLAGS               2
+#define NFLAGS              2
 #define RA_FLAG_BIG_ENDIAN  (1ULL<<0)
 #define RA_FLAG_COMPRESSED  (1ULL<<1)
 #define RA_UNKNOWN_FLAGS    (-(1LL<<NFLAGS))
@@ -71,50 +72,33 @@ typedef enum {
     RA_TYPE_COMPLEX
 } ra_type;
 
-typedef int8_t   RA_CTYPE_1_1;
-typedef int16_t  RA_CTYPE_1_2;
-typedef int32_t  RA_CTYPE_1_4;
-typedef int64_t  RA_CTYPE_1_8;
-typedef uint8_t  RA_CTYPE_2_1;
-typedef uint16_t RA_CTYPE_2_2;
-typedef uint32_t RA_CTYPE_2_4;
-typedef uint64_t RA_CTYPE_2_8;
-typedef float    RA_CTYPE_3_4;
-typedef double   RA_CTYPE_3_8;
 
-//#undef RA_DATA_POINTER(ELTYPE,ELBYTE) (RA_CTYPE_##ELTYPE##_##ELBYTE)
-
-/*
-static char *RA_TYPE_NAMES[] = {
-    "user",
-    "int",
-    "uint",
-    "float",
-    "complex" };
-*/
 static const char RA_TYPE_CODES[] = { "siufc" };
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int ra_read  (ra_t *a, const char *path);
-void ra_query  (const char *path);
-//uint64_t ra_data_offset (const char *path);   /* for mmap purposes */
-//uint8_t ra_ndims (const char *path);
-//uint8_t ra_type (const char *path);
-int ra_write (ra_t *a, const char *path);
-void ra_free (ra_t *a);
-int ra_reshape(ra_t *r, const uint64_t newdims[], const uint64_t ndimsnew);
-void ra_convert (ra_t* r, const uint64_t eltype, const uint64_t elbyte);
-int ra_squash (ra_t *r);
-int ra_diff (const ra_t *a, const ra_t *b, const int diff_type);
-//void ra_export_pgm (const ra_t *a);
+
+// Basic functions
+int ra_read(ra_t * a, const char *path);
+int ra_write(const ra_t * restrict a, const char *path);
+void ra_free(ra_t * a);
+
+int ra_read_header(ra_t *a, const char *path);
+void ra_print_header(const char *path);
+uint64_t ra_flags(const char *path);
+uint64_t ra_eltype(const char *path);
+uint64_t ra_elbyte(const char *path);
+uint64_t ra_size(const char *path);
+uint64_t ra_ndims(const char *path);
+uint64_t *ra_dims(const char *path);
+void ra_print_dims(const char *path);
+int ra_reshape(ra_t * r, const uint64_t newdims[], const uint64_t ndimsnew);
+int ra_diff(const ra_t * a, const ra_t * b, const int diff_type);
+
 
 #ifdef __cplusplus
 }
 #endif
-
-
-
-#endif   /* _ra_H */
+#endif                          /* _RA_H */

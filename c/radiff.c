@@ -36,41 +36,45 @@
 
 
 void
-print_usage(char* argv[])
+print_usage(char *argv[])
 {
 
     fprintf(stderr, "Compare two RA files.\n");
-    fprintf(stderr, "Usage: %s [-1] [-2] [-h] <file1.ra> <file2.ra>\n", argv[0]);
+    fprintf(stderr, "Usage: %s [-1] [-2] [-h] <file1.ra> <file2.ra>\n",
+        argv[0]);
     fprintf(stderr, "\t-1\tCompute L1 distance between data sections.\n");
     fprintf(stderr, "\t-2\tCompute L2 distance between data sections.\n");
     fprintf(stderr, "\t-h\tPrint usage.\n");
-    fprintf(stderr, "Default behavior is to identify first differing datum.\n");
+    fprintf(stderr,
+        "Default behavior is to identify first differing datum.\n");
 }
 
 int
-main (int argc, char *argv[])
+main(int argc, char *argv[])
 {
     ra_t r1, r2;
     int isdiff = 0;
     int diff_type = 0;
     int c;
-    while ((c = getopt (argc, argv, "12h")) != -1)
+    while ((c = getopt(argc, argv, "12h")) != -1)
     {
         switch (c) {
-            case '2':
-                diff_type = 2;
-                break;
-            case '1':
-                diff_type = 1;
-                break;
+        case '2':
+            diff_type = 2;
+            break;
+        case '1':
+            diff_type = 1;
+            break;
         }
     }
 
-    if (argc == optind) {
-       print_usage(argv);
-       return EX_USAGE;
+    if (argc == optind)
+    {
+        print_usage(argv);
+        return EX_USAGE;
     }
-    for (int index = optind; index < argc; index++) {
+    for (int index = optind; index < argc; index++)
+    {
         if (index == optind)
             ra_read(&r1, argv[index]);
         else if (index == optind + 1)

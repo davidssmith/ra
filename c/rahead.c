@@ -25,16 +25,45 @@
 */
 
 #include <stdio.h>
+#include <string.h>
 #include "ra.h"
 
 int
-main (int argc, char *argv[])
+main(int argc, char *argv[])
 {
-    if (argc > 1)
-        ra_query(argv[1]);
-    else {
+    if (argc > 2) 
+	{
+		if (strncmp(argv[1], "flags", 5) == 0)
+		{
+			printf("%lu\n", ra_flags(argv[2]));
+		}
+		else if (strncmp(argv[1], "eltype", 6) == 0)
+		{
+			printf("%lu\n", ra_eltype(argv[2]));
+		}
+		else if (strncmp(argv[1], "elbyte", 6) == 0)
+		{
+			printf("%lu\n", ra_elbyte(argv[2]));
+		}
+		else if (strncmp(argv[1], "size", 4) == 0)
+		{
+			printf("%lu\n", ra_size(argv[2]));
+		}
+		else if (strncmp(argv[1], "ndims", 5) == 0)
+		{
+			printf("%lu\n", ra_ndims(argv[2]));
+		}
+		else
+		{
+        	ra_print_header(argv[1]);
+		}
+	}
+	else if (argc > 1)
+        ra_print_header(argv[1]);
+    else
+    {
         printf("View header of ra file.\n");
-        printf("Usage: rahead <file.ra>\n");
+        printf("Usage: rahead [flags|eltype|elbyte|size|ndims] <file.ra>\n");
     }
 
     return 0;

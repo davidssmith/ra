@@ -32,25 +32,25 @@ endif
 
 
 CC=cc -std=c99
-CFLAGS=-O2 -Wall # -g -fPIC
-LFLAGS= -lm #-lpthread -lblosc -L/usr/local/lib
+CFLAGS=-O2 -Wall
+LFLAGS= -lm
 
-objects = ra.o float16.o
+objects = ra.o
 
-all: ra2cfl cfl2ra rahead raconvert rasquash radiff radims rareshape test
+all: ra2cfl cfl2ra rahead radiff radims rareshape test timing
 
 test: $(objects) test.o
 	$(CC) $(objects) test.o -o test $(LFLAGS)
+timing: $(objects) timing.o
+	$(CC) $(objects) timing.o -o timing $(LFLAGS)
+h5time: hdf5.o
+	h5cc -O2 hdf5.c -o h5time
 ra2cfl: $(objects)  ra2cfl.o
 	$(CC) $(objects) ra2cfl.o -o ra2cfl $(LFLAGS)
 cfl2ra: $(objects)  cfl2ra.o
 	$(CC) $(objects) cfl2ra.o -o cfl2ra $(LFLAGS)
 rahead: $(objects) rahead.o
 	$(CC) $(objects) rahead.o -o rahead $(LFLAGS)
-raconvert: $(objects) raconvert.o
-	$(CC) $(objects) raconvert.o -o raconvert $(LFLAGS)
-rasquash: $(objects) rasquash.o
-	$(CC) $(objects) rasquash.o -o rasquash $(LFLAGS)
 radiff: $(objects) radiff.o
 	$(CC) $(objects) radiff.o -o radiff $(LFLAGS)
 radims: $(objects) radims.o
@@ -62,14 +62,12 @@ rareshape: $(objects) rareshape.o
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f *.o test ra2cfl cfl2ra rahead raconvert rasquash radiff radims rareshape
+	rm -f *.o test ra2cfl cfl2ra rahead radiff radims rareshape timing
 
-install: ra2cfl cfl2ra rahead raconvert rasquash radiff radims rareshape
+install: ra2cfl cfl2ra rahead radiff radims rareshape
 	install -m 0755 ra2cfl $(PREFIX)/bin
 	install -m 0755 cfl2ra $(PREFIX)/bin
 	install -m 0755 rahead $(PREFIX)/bin
-	install -m 0755 raconvert $(PREFIX)/bin
-	install -m 0755 rasquash $(PREFIX)/bin
 	install -m 0755 radiff $(PREFIX)/bin
 	install -m 0755 radims $(PREFIX)/bin
 	install -m 0755 rareshape $(PREFIX)/bin
