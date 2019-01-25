@@ -28,6 +28,8 @@ main()
             printf("\n");
     }
     printf("\nTEST PASSED\n");
+	ra_free(&r);
+	ra_free(&r2);
 
     return 0;
 }

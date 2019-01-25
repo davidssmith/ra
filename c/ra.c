@@ -37,6 +37,7 @@
 
 // TODO: extend validation checks to internal consistency
 // TODO: compressed with LEB128?
+// TODO: ra_create  function
 
 static int
 validate (const ra_t * restrict a)
@@ -106,6 +107,7 @@ ra_print_header(const char *path)
     for (int j = 0; j < a.ndims - 1; ++j)
         printf("%lu,", a.dims[j]);
     printf("%lu]\n\n", a.dims[a.ndims - 1]);
+	ra_free(&a);
 }
 
 uint64_t
@@ -175,6 +177,7 @@ ra_print_dims(const char *path)
     for (uint64_t i = 0; i < ndims; ++i)
         printf("%lu ", dims[i]);
     printf("\n");
+	free(dims);
 }
 
 int
