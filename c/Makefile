@@ -37,10 +37,14 @@ LFLAGS= -lm #-lpthread -lblosc -L/usr/local/lib
 
 objects = ra.o
 
-all: ra2cfl cfl2ra rahead radiff radims rareshape test
+all: ra2cfl cfl2ra rahead radiff radims rareshape test timing
 
 test: $(objects) test.o
 	$(CC) $(objects) test.o -o test $(LFLAGS)
+timing: $(objects) timing.o
+	$(CC) $(objects) timing.o -o timing $(LFLAGS)
+#h5time: $(objects) hdf5.o
+#	$(CC) $(objects) hdf5.o -o h5time $(LFLAGS)
 ra2cfl: $(objects)  ra2cfl.o
 	$(CC) $(objects) ra2cfl.o -o ra2cfl $(LFLAGS)
 cfl2ra: $(objects)  cfl2ra.o
@@ -58,7 +62,7 @@ rareshape: $(objects) rareshape.o
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f *.o test ra2cfl cfl2ra rahead radiff radims rareshape
+	rm -f *.o test ra2cfl cfl2ra rahead radiff radims rareshape timing
 
 install: ra2cfl cfl2ra rahead radiff radims rareshape
 	install -m 0755 ra2cfl $(PREFIX)/bin

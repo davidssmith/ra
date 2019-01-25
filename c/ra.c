@@ -186,7 +186,15 @@ ra_read(ra_t * a, const char *path)
 {
     uint64_t bytestoread, bytesleft;
     int fd = ra_valid_open(path);
+#ifdef OLD
     valid_read(fd, &(a->flags), sizeof(uint64_t));
+    valid_read(fd, &(a->eltype), sizeof(uint64_t));
+    valid_read(fd, &(a->elbyte), sizeof(uint64_t));
+    valid_read(fd, &(a->size), sizeof(uint64_t));
+    valid_read(fd, &(a->ndims), sizeof(uint64_t));
+#else
+    valid_read(fd, a, 5*sizeof(uint64_t));
+#endif
     if (a->flags & RA_UNKNOWN_FLAGS)
     {
         fprintf(stderr,
@@ -195,10 +203,6 @@ ra_read(ra_t * a, const char *path)
             "code. Correctness of input is not guaranteed. Update your version of the\n");
         fprintf(stderr, "RawArray package to stop this warning.\n");
     }
-    valid_read(fd, &(a->eltype), sizeof(uint64_t));
-    valid_read(fd, &(a->elbyte), sizeof(uint64_t));
-    valid_read(fd, &(a->size), sizeof(uint64_t));
-    valid_read(fd, &(a->ndims), sizeof(uint64_t));
     a->dims = (uint64_t *) malloc(a->ndims * sizeof(uint64_t));
     valid_read(fd, a->dims, a->ndims * sizeof(uint64_t));
     bytesleft = a->size;
@@ -228,11 +232,15 @@ ra_write(ra_t * a, const char *path)
         err(errno, "unable to open output file for writing");
     /* write the easy stuff */
     valid_write(fd, &RA_MAGIC_NUMBER, sizeof(uint64_t));
+#ifdef OLD
     valid_write(fd, &(a->flags), sizeof(uint64_t));
     valid_write(fd, &(a->eltype), sizeof(uint64_t));
     valid_write(fd, &(a->elbyte), sizeof(uint64_t));
     valid_write(fd, &(a->size), sizeof(uint64_t));
     valid_write(fd, &(a->ndims), sizeof(uint64_t));
+#else
+    valid_write(fd, a, 5*sizeof(uint64_t));
+#endif
     valid_write(fd, a->dims, a->ndims * sizeof(uint64_t));
 
     bytesleft = a->size;
