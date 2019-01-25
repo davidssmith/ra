@@ -23,11 +23,8 @@
   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   SOFTWARE.
 */
-#include <assert.h>
 #include <err.h>
-#include <errno.h>
 #include <fcntl.h>
-#include <float.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -190,7 +187,7 @@ ra_read(ra_t * a, const char *path)
     bytesleft = a->size;
     a->data = (uint8_t *) malloc(bytesleft);
     if (a->data == NULL)
-        err(errno, "unable to allocate memory for data");
+        err(EX_OSERR, "unable to allocate memory for data");
     uint8_t *data_cursor = a->data;
     while (bytesleft > 0)
     {
@@ -211,7 +208,7 @@ ra_write(ra_t * a, const char *path)
     uint8_t *data_in_cursor;
     fd = open(path, O_WRONLY | O_TRUNC | O_CREAT, 0644);
     if (fd == -1)
-        err(errno, "unable to open output file for writing");
+        err(EX_CANTCREAT, "unable to open output file for writing");
     /* write the easy stuff */
     valid_write(fd, &RA_MAGIC_NUMBER, sizeof(uint64_t));
     valid_write(fd, a, 5*sizeof(uint64_t));
@@ -246,7 +243,8 @@ ra_reshape(ra_t * r, const uint64_t newdims[], const uint64_t ndimsnew)
     uint64_t newsize = 1;
     for (uint64_t k = 0; k < ndimsnew; ++k)
         newsize *= newdims[k];
-    assert(r->size == newsize * r->elbyte);
+    if (r->size != newsize * r->elbyte)
+		err(EX_DATAERR, "Total number of elements must be conserved.");
     // if new dims preserve total number of elements, then change the dims
     r->ndims = ndimsnew;
     size_t newdimsize = ndimsnew * sizeof(uint64_t);
