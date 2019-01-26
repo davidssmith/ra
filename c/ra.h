@@ -73,6 +73,8 @@ typedef enum {
 } ra_type;
 
 
+enum { RA_DIFF_EQ, RA_DIFF_L1, RA_DIFF_L2 };
+
 static const char RA_TYPE_CODES[] = { "siufc" };
 
 #ifdef __cplusplus
