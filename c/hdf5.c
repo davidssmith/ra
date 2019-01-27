@@ -132,7 +132,7 @@ h5readgroup (hid_t file_id, const char *dataset, float *data)
 static clock_t begin, end;
 size_t total_bytes;
 
-void
+float
 h5smalltestseparate (size_t n, size_t nfiles)
 {
 	char filename[32];
@@ -153,11 +153,12 @@ h5smalltestseparate (size_t n, size_t nfiles)
 		unlink(filename);
 	}
 	float t = (double)(end - begin) / (double)CLOCKS_PER_SEC;
-	float mb = total_bytes * 1e-6;
-	printf("HDF5     %ld %ldx1 files:       %6.1f ms, %6.1f MBps\n", nfiles, n, 1000*t, mb/t);
+	//float mb = total_bytes * 1e-6;
+	//printf("HDF5     %ld %ldx1 files:       %6.1f ms, %6.1f MBps\n", nfiles, n, 1000*t, mb/t);
+	return t;
 }
 
-void
+float
 h5smalltestcombined (size_t n, size_t nfiles)
 {
 	char groupname[32];
@@ -181,11 +182,12 @@ h5smalltestcombined (size_t n, size_t nfiles)
 	end = clock();
 	unlink("tmp/small.h5");
 	float t = (double)(end - begin) / (double)CLOCKS_PER_SEC;
-	float mb = total_bytes * 1e-6;
-	printf("HDF5     %ld %ldx1 datasets:    %6.1f ms, %6.1f MBps\n", nfiles, n, 1000*t, mb/t);
+	//float mb = total_bytes * 1e-6;
+	//printf("HDF5 %ld %ldx1, %6.1f, ms, %6.1f, MBps\n", nfiles, n, 1000*t, mb/t);
+	return t;
 }
 
-void
+float
 h5bigtest (size_t n, size_t nfiles)
 {
 	float *data = (float *) calloc(n*nfiles, sizeof(float));
@@ -196,21 +198,56 @@ h5bigtest (size_t n, size_t nfiles)
 	end = clock();
 	unlink("tmp/big.h5");
 	float t = (double)(end - begin) / (double)CLOCKS_PER_SEC;
-	float mb = total_bytes * 1e-6;
-	printf("HDF5     1 %ldx%ld dataset:     %6.1f ms, %6.1f MBps\n", n,nfiles, 1000*t, mb/t);
+	//printf("HDF5 1 %ldx%ld, %6.1f, ms, %6.1f, MBps\n", n,nfiles, 1000*t, mb/t);
+	return t;
 }
-
+ 
+void
+print_stats (const char *name, float t[], const int navg)
+{
+	float tavg = 0.f, tmin=1e20, tmax =0;
+	for (int i = 0; i < navg; ++i){
+		tavg += t[i];
+		if (t[i] < tmin) tmin = t[i];
+		if (t[i] > tmax) tmax = t[i];
+	}
+	tavg /= navg;
+	printf("%s, %7.2f, MBps avg of %d, %7.2f, min, %7.2f, max\n",
+			name, tavg, navg, tmin, tmax);
+}
 
 int
 main (int argc, char *argv[])
 {
 	size_t n = 100;
 	size_t nfiles = 10000;
+	float mb = n*nfiles*sizeof(float) * 1e-6;
+	char name[32];
 
-	//h5smalltestseparate(n, nfiles);
-	h5smalltestcombined(n, nfiles);
-	h5smalltestcombined(n*10, nfiles/10);
-	h5bigtest(n, nfiles);
+    if(argc < 2) {
+		fprintf(stderr, "%s <navg>\n", argv[0]);
+		return 1;
+	}
+    int navg = atoi(argv[1]);
+	float *t = malloc(sizeof(float)*navg);
+
+    for (int i = 0; i < navg; ++i) {
+         t[i] = mb/h5smalltestcombined(n, nfiles);
+    }
+	sprintf(name, "HDF5 %ld %ldx1", nfiles, n);
+	print_stats(name, t, navg);
+
+    for (int i = 0; i < navg; ++i) {
+         t[i] = mb/h5smalltestcombined(n*10, nfiles/10);
+    }
+	sprintf(name, "HDF5 %ld %ldx1", nfiles/10, n*10);
+	print_stats(name, t, navg);
+
+    for (int i = 0; i < navg; ++i) {
+         t[i] = mb/h5bigtest(n, nfiles);
+    }
+	sprintf(name, "HDF5 1 %ldx%ld", n, nfiles);
+	print_stats(name, t, navg);
 
     return 0;
 }

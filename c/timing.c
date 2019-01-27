@@ -33,7 +33,7 @@
 static clock_t begin, end;
 size_t total_bytes;
 
-void
+float
 rasmalltest (size_t n, size_t nfiles)
 {
 	char filename[32];
@@ -59,13 +59,13 @@ rasmalltest (size_t n, size_t nfiles)
 		sprintf(filename, "tmp/%ld.ra", i);
 		unlink(filename);
 	}
-	float t = (double)(end - begin) / (double)CLOCKS_PER_SEC;
-	float mb = total_bytes * 1e-6;
-	printf("RawArray %ld %ldx1 files:       %6.2f ms, %6.2f MBps\n", nfiles, n, 1000*t, mb/t);
+	float t = (float)(end - begin) / (float)CLOCKS_PER_SEC;
+	//float mb = total_bytes * 1e-6;
 	free(r);
+	return t;
 }
 
-void
+float
 rabigtest (size_t n, size_t nfiles)
 {
 	uint64_t dims[] = {0, 0};
@@ -79,23 +79,53 @@ rabigtest (size_t n, size_t nfiles)
 	ra_read(r, "tmp/big.ra");
 	end = clock();
 	unlink("tmp/big.ra");
-	float t = (double)(end - begin) / (double)CLOCKS_PER_SEC;
-	float mb = total_bytes * 1e-6;
-	printf("RawArray 1 %ldx%ld file:        %6.2f ms, %6.2f MBps\n", n, nfiles, t*1000, mb/t);
+	float t = (float)(end - begin) / (float)CLOCKS_PER_SEC;
 	ra_free(r);
 	free(r);
+	return t;
 }
 
+void
+print_stats (const char *name, float t[], const int navg)
+{
+	float tavg = 0.f, tmin=1e20, tmax =0;
+	for (int i = 0; i < navg; ++i){
+		tavg += t[i];
+		if (t[i] < tmin) tmin = t[i];
+		if (t[i] > tmax) tmax = t[i];
+	}
+	tavg /= navg;
+	printf("%s, %7.2f, MBps avg of %d, %7.2f, min, %7.2f, max\n", 
+			name, tavg, navg, tmin, tmax);
+}
 
 int
 main (int argc, char *argv[])
 {
 	size_t nfiles = 10000;
 	size_t n = 100;
+	float mb = 1e-6*n*nfiles*sizeof(float);
+	char name[32];
 
-	rasmalltest(n, nfiles);
-	rasmalltest(n*10, nfiles/10);
-	rabigtest(n, nfiles);
+	if(argc < 2) {
+		fprintf(stderr, "%s <navg>\n", argv[0]);
+		return 1;
+	}
+	int navg = atoi(argv[1]);
+	float *t = (float*)malloc(navg*sizeof(float));
+
+	for (int i = 0; i < navg; ++i) 
+		t[i] = mb/rasmalltest(n, nfiles); 
+	sprintf(name, "RawArray %ld %ldx1", nfiles, n);
+	print_stats(name, t, navg);
+	for (int i = 0; i < navg; ++i)
+		t[i] = mb/rasmalltest(n*10, nfiles/10);
+	sprintf(name, "RawArray %ld %ldx1", nfiles/10, n*10);
+	print_stats(name, t, navg);
+	for (int i = 0; i < navg; ++i)
+		t[i] = mb/rabigtest(n, nfiles);
+	sprintf(name, "RawArray 1 %ldx%ld", n,nfiles);
+	print_stats(name, t, navg);
 
     return 0;
 }

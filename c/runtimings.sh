@@ -1,8 +1,6 @@
 #!/bin/sh
 
 (
-for i in `seq 1 10`; do
-	./timing
-	./hdf5
-done
+	./timing 10
+	./hdf5 10
 ) | sort
