@@ -37,27 +37,21 @@ void
 rasmalltest (size_t n, size_t nfiles)
 {
 	char filename[32];
-	ra_t r;
-	r.magic = RA_MAGIC_NUMBER;
-	r.ndims = 1;
-	r.flags = 0;
-	r.eltype = 3;
-	r.eltype = 4;
-	r.dims = (uint64_t *) malloc(1*sizeof(uint64_t));
-	r.dims[0] = n;
-	r.data = (uint8_t *) calloc(n,sizeof(float));
-	r.size = n*sizeof(float);
-	total_bytes = r.size * nfiles;
+	uint64_t dims[] = {0};
+	dims[0] = n;
+	ra_t *r = ra_create("f4", 1, dims);
+	total_bytes = r->size * nfiles;
 	begin = clock();
 	for (size_t i = 0; i < nfiles; ++i) {
 		sprintf(filename, "tmp/%ld.ra", i);
-		ra_write(&r, filename);
+		ra_write_all(r, filename);
 	}
-	ra_free(&r);
+	ra_free_all(r);
 	for (size_t i = 0; i < nfiles; ++i) {
 		sprintf(filename, "tmp/%ld.ra", i);
-		ra_read(&r, filename);
-		ra_free(&r);
+		//puts(filename);
+		ra_read_all(r, filename);
+		ra_free_all(r);
 	}
 	end = clock();
 	//printf("r.data[0] = %f\n", testval);
@@ -68,34 +62,28 @@ rasmalltest (size_t n, size_t nfiles)
 	float t = (double)(end - begin) / (double)CLOCKS_PER_SEC;
 	float mb = total_bytes * 1e-6;
 	printf("RawArray %ld %ldx1 files:       %6.1f ms, %6.1f MBps\n", nfiles, n, 1000*t, mb/t);
-	ra_free(&r);
+	free(r);
 }
 
 void
 rabigtest (size_t n, size_t nfiles)
 {
-	ra_t r;
-	r.magic = RA_MAGIC_NUMBER;
-	r.flags = 0;
-	r.eltype = 3;
-	r.eltype = 4;
-	r.ndims = 2;
-	r.dims = (uint64_t *) malloc(r.ndims*sizeof(uint64_t));
-	r.dims[0] = n;
-	r.dims[1] = nfiles;
-	r.data = (uint8_t *) calloc(r.dims[0]*r.dims[1],sizeof(float));
-	r.size = r.dims[0]*r.dims[1]*sizeof(float);
-	total_bytes = r.size;
+	uint64_t dims[] = {0, 0};
+	dims[0] = n;
+	dims[1] = nfiles;
+	ra_t *r = ra_create("f4", 2, dims);
+	total_bytes = r->size;
 	begin = clock();
-	ra_write(&r, "tmp/big.ra");
-	ra_free(&r);
-	ra_read(&r, "tmp/big.ra");
+	ra_write_all(r, "tmp/big.ra");
+	ra_free_all(r);
+	ra_read_all(r, "tmp/big.ra");
 	end = clock();
 	unlink("tmp/big.ra");
 	float t = (double)(end - begin) / (double)CLOCKS_PER_SEC;
 	float mb = total_bytes * 1e-6;
 	printf("RawArray 1 %ldx%ld file:        %6.1f ms, %6.1f MBps\n", n, nfiles, t*1000, mb/t);
-	ra_free(&r);
+	ra_free_all(r);
+	free(r);
 }
 
 

@@ -46,6 +46,8 @@ typedef struct {
     uint8_t *data;              /* pointer to raw data -- contiguous -- so can mmap if y'ant'ta.
                                    Use chars to handle generic data, since reader can use 'type'
                                    enum to recreate correct pointer cast */
+	uint8_t *top;               /* pointer to top of the memory area holding the file in RAM */
+	size_t  filesize;          /* total size of file */
 } ra_t;
 
 
@@ -83,9 +85,13 @@ extern "C" {
 
 
 // Basic functions
+ra_t * ra_create(const char *type, const uint64_t ndims, const uint64_t dims[]);
 int ra_read(ra_t * a, const char *path);
+int ra_read_all(ra_t * a, const char *path);
 int ra_write(const ra_t * restrict a, const char *path);
+int ra_write_all(const ra_t * restrict a, const char *path);
 void ra_free(ra_t * a);
+void ra_free_all(ra_t * a);
 
 int ra_read_header(ra_t *a, const char *path);
 void ra_print_header(const char *path);
