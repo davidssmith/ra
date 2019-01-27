@@ -107,11 +107,11 @@ main (int argc, char *argv[])
 	float mb = 1e-6*n*nfiles*sizeof(float);
 	char name[32];
 
+	int navg;
 	if(argc < 2) {
-		fprintf(stderr, "%s <navg>\n", argv[0]);
-		return 1;
-	}
-	int navg = atoi(argv[1]);
+		navg = 1;
+	} else
+		navg = atoi(argv[1]);
 	float *t = (float*)malloc(navg*sizeof(float));
 
 	for (int i = 0; i < navg; ++i) 
