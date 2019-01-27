@@ -50,12 +50,12 @@ rasmalltest (size_t n, size_t nfiles)
 	total_bytes = r->size * nfiles;
 	gettimeofday(&begin,NULL);
 	for (size_t i = 0; i < nfiles; ++i) {
-		sprintf(filename, "tmp/%ld.ra", i);
+		sprintf(filename, "tmp/ra/%ld.ra", i);
 		ra_write(r, filename);
 	}
 	ra_free(r);
 	for (size_t i = 0; i < nfiles; ++i) {
-		sprintf(filename, "tmp/%ld.ra", i);
+		sprintf(filename, "tmp/ra/%ld.ra", i);
 		//puts(filename);
 		ra_read(r, filename);
 		ra_free(r);
@@ -64,7 +64,7 @@ rasmalltest (size_t n, size_t nfiles)
 
 	//printf("r.data[0] = %f\n", testval);
 	for (size_t i = 0; i < nfiles; ++i) {
-		sprintf(filename, "tmp/%ld.ra", i);
+		sprintf(filename, "tmp/ra/%ld.ra", i);
 		unlink(filename);
 	}
 	uint64_t t = time_usec(&end) - time_usec(&begin);
@@ -82,11 +82,11 @@ rabigtest (size_t n, size_t nfiles)
 	ra_t *r = ra_create("f4", 2, dims);
 	total_bytes = r->size;
 	gettimeofday(&begin, NULL);
-	ra_write(r, "tmp/big.ra");
+	ra_write(r, "tmp/ra/big.ra");
 	ra_free(r);
-	ra_read(r, "tmp/big.ra");
+	ra_read(r, "tmp/ra/big.ra");
 	gettimeofday(&end, NULL);
-	unlink("tmp/big.ra");
+	unlink("tmp/ra/big.ra");
 	//float t = (float)(end - begin) / (float)CLOCKS_PER_SEC;
 	uint64_t t = time_usec(&end) - time_usec(&begin);
 	ra_free(r);

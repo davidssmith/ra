@@ -146,16 +146,16 @@ h5smalltestseparate (size_t n, size_t nfiles)
 	total_bytes = n * nfiles *sizeof(float);
 	gettimeofday(&begin, NULL);
 	for (size_t i = 0; i < nfiles; ++i) {
-		sprintf(filename, "tmp/%ld.h5", i);
+		sprintf(filename, "/data/ra/%ld.h5", i);
 		h5write(filename, "x", data, n, 1);
 	}
 	for (size_t i = 0; i < nfiles; ++i) {
-		sprintf(filename, "tmp/%ld.h5", i);
+		sprintf(filename, "/data/ra/%ld.h5", i);
 		h5read(filename, "x", data);
 	}
 	gettimeofday(&end, NULL);
 	for (size_t i = 0; i < nfiles; ++i) {
-		sprintf(filename, "tmp/%ld.h5", i);
+		sprintf(filename, "/data/ra/%ld.h5", i);
 		unlink(filename);
 	}
 	uint64_t t = time_usec(&end) - time_usec(&begin);
@@ -176,7 +176,7 @@ h5smalltestcombined (size_t n, size_t nfiles)
 	gettimeofday(&begin, NULL);
 
      /* Create a new file using default properties. */
-   	file_id = H5Fcreate("tmp/small.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+   	file_id = H5Fcreate("/data/ra/small.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 	for (size_t i = 0; i < nfiles; ++i) {
 		sprintf(groupname, "tmp%ld", i);
 		h5writegroup(file_id, groupname, data, n, 1);
@@ -187,7 +187,7 @@ h5smalltestcombined (size_t n, size_t nfiles)
 	}
     status = H5Fclose(file_id);
 	gettimeofday(&end, NULL);
-	unlink("tmp/small.h5");
+	unlink("/data/ra/small.h5");
 	uint64_t t = time_usec(&end) - time_usec(&begin);
 	//float mb = total_bytes * 1e-6;
 	//printf("HDF5 %ld %ldx1, %6.1f, ms, %6.1f, MBps\n", nfiles, n, 1000*t, mb/t);
@@ -200,10 +200,10 @@ h5bigtest (size_t n, size_t nfiles)
 	float *data = (float *) calloc(n*nfiles, sizeof(float));
 	total_bytes = n*nfiles*sizeof(float);
 	gettimeofday(&begin, NULL);
-	h5write("tmp/big.h5", "x", data, n,nfiles);
-	h5read("tmp/big.h5", "x", data);
+	h5write("/data/ra/big.h5", "x", data, n,nfiles);
+	h5read("/data/ra/big.h5", "x", data);
 	gettimeofday(&end, NULL);
-	unlink("tmp/big.h5");
+	unlink("/data/ra/big.h5");
 	uint64_t t = time_usec(&end) - time_usec(&begin);
 	//printf("HDF5 1 %ldx%ld, %6.1f, ms, %6.1f, MBps\n", n,nfiles, 1000*t, mb/t);
 	return t;
