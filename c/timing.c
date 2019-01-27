@@ -61,7 +61,7 @@ rasmalltest (size_t n, size_t nfiles)
 	}
 	float t = (double)(end - begin) / (double)CLOCKS_PER_SEC;
 	float mb = total_bytes * 1e-6;
-	printf("RawArray %ld %ldx1 files:       %6.1f ms, %6.1f MBps\n", nfiles, n, 1000*t, mb/t);
+	printf("RawArray %ld %ldx1 files:       %6.2f ms, %6.2f MBps\n", nfiles, n, 1000*t, mb/t);
 	free(r);
 }
 
@@ -81,7 +81,7 @@ rabigtest (size_t n, size_t nfiles)
 	unlink("tmp/big.ra");
 	float t = (double)(end - begin) / (double)CLOCKS_PER_SEC;
 	float mb = total_bytes * 1e-6;
-	printf("RawArray 1 %ldx%ld file:        %6.1f ms, %6.1f MBps\n", n, nfiles, t*1000, mb/t);
+	printf("RawArray 1 %ldx%ld file:        %6.2f ms, %6.2f MBps\n", n, nfiles, t*1000, mb/t);
 	ra_free(r);
 	free(r);
 }
@@ -94,6 +94,7 @@ main (int argc, char *argv[])
 	size_t n = 100;
 
 	rasmalltest(n, nfiles);
+	rasmalltest(n*10, nfiles/10);
 	rabigtest(n, nfiles);
 
     return 0;
