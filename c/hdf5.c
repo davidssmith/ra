@@ -24,12 +24,18 @@
   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   SOFTWARE.
 */
-#include <time.h>
+#include <sys/time.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include "hdf5.h"
+
+uint64_t
+time_usec(const struct timeval *tv)
+{
+	    return tv->tv_usec + 1000000*tv->tv_sec;
+}
 
 int 
 h5write (const char* filename, const char *dataset, float *data, size_t m, size_t n) 
@@ -129,16 +135,16 @@ h5readgroup (hid_t file_id, const char *dataset, float *data)
 
 }
 
-static clock_t begin, end;
+static struct timeval begin, end;
 size_t total_bytes;
 
-float
+uint64_t
 h5smalltestseparate (size_t n, size_t nfiles)
 {
 	char filename[32];
 	float *data = (float *) calloc(n,sizeof(float));
 	total_bytes = n * nfiles *sizeof(float);
-	begin = clock();
+	gettimeofday(&begin, NULL);
 	for (size_t i = 0; i < nfiles; ++i) {
 		sprintf(filename, "tmp/%ld.h5", i);
 		h5write(filename, "x", data, n, 1);
@@ -147,26 +153,27 @@ h5smalltestseparate (size_t n, size_t nfiles)
 		sprintf(filename, "tmp/%ld.h5", i);
 		h5read(filename, "x", data);
 	}
-	end = clock();
+	gettimeofday(&end, NULL);
 	for (size_t i = 0; i < nfiles; ++i) {
 		sprintf(filename, "tmp/%ld.h5", i);
 		unlink(filename);
 	}
-	float t = (double)(end - begin) / (double)CLOCKS_PER_SEC;
+	uint64_t t = time_usec(&end) - time_usec(&begin);
 	//float mb = total_bytes * 1e-6;
 	//printf("HDF5     %ld %ldx1 files:       %6.1f ms, %6.1f MBps\n", nfiles, n, 1000*t, mb/t);
 	return t;
 }
 
-float
+uint64_t
 h5smalltestcombined (size_t n, size_t nfiles)
 {
 	char groupname[32];
 	float *data = (float *) calloc(n,sizeof(float));
 	total_bytes = n * nfiles *sizeof(float);
-	begin = clock();
    	hid_t       file_id;
    	herr_t      status;
+
+	gettimeofday(&begin, NULL);
 
      /* Create a new file using default properties. */
    	file_id = H5Fcreate("tmp/small.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
@@ -179,49 +186,51 @@ h5smalltestcombined (size_t n, size_t nfiles)
 		h5readgroup(file_id, groupname, data);
 	}
     status = H5Fclose(file_id);
-	end = clock();
+	gettimeofday(&end, NULL);
 	unlink("tmp/small.h5");
-	float t = (double)(end - begin) / (double)CLOCKS_PER_SEC;
+	uint64_t t = time_usec(&end) - time_usec(&begin);
 	//float mb = total_bytes * 1e-6;
 	//printf("HDF5 %ld %ldx1, %6.1f, ms, %6.1f, MBps\n", nfiles, n, 1000*t, mb/t);
 	return t;
 }
 
-float
+uint64_t
 h5bigtest (size_t n, size_t nfiles)
 {
 	float *data = (float *) calloc(n*nfiles, sizeof(float));
 	total_bytes = n*nfiles*sizeof(float);
-	begin = clock();
+	gettimeofday(&begin, NULL);
 	h5write("tmp/big.h5", "x", data, n,nfiles);
 	h5read("tmp/big.h5", "x", data);
-	end = clock();
+	gettimeofday(&end, NULL);
 	unlink("tmp/big.h5");
-	float t = (double)(end - begin) / (double)CLOCKS_PER_SEC;
+	uint64_t t = time_usec(&end) - time_usec(&begin);
 	//printf("HDF5 1 %ldx%ld, %6.1f, ms, %6.1f, MBps\n", n,nfiles, 1000*t, mb/t);
 	return t;
 }
  
 void
-print_stats (const char *name, float t[], const int navg)
+print_stats (const char *name, uint64_t t[], const int navg)
 {
 	float tavg = 0.f, tmin=1e20, tmax =0;
 	for (int i = 0; i < navg; ++i){
-		tavg += t[i];
+		tavg += (float)t[i]*1e-3;
 		if (t[i] < tmin) tmin = t[i];
 		if (t[i] > tmax) tmax = t[i];
 	}
 	tavg /= navg;
-	printf("%s, %7.2f, MBps avg of %d, %7.2f, min, %7.2f, max\n",
+	tmin *= 1e-3;
+	tmax *= 1e-3;
+	printf("%s, %7.2f, ms avg of %d, %7.2f, min, %7.2f, max\n",
 			name, tavg, navg, tmin, tmax);
 }
 
 int
 main (int argc, char *argv[])
 {
-	size_t n = 100;
-	size_t nfiles = 10000;
-	float mb = n*nfiles*sizeof(float) * 1e-6;
+	size_t n = 10;
+	size_t nfiles = 100000;
+	//float mb = n*nfiles*sizeof(float) * 1e-6;
 	char name[32];
 
     if(argc < 2) {
@@ -229,22 +238,22 @@ main (int argc, char *argv[])
 		return 1;
 	}
     int navg = atoi(argv[1]);
-	float *t = malloc(sizeof(float)*navg);
+	uint64_t *t = malloc(sizeof(uint64_t)*navg);
 
     for (int i = 0; i < navg; ++i) {
-         t[i] = mb/h5smalltestcombined(n, nfiles);
+         t[i] = h5smalltestcombined(n, nfiles);
     }
 	sprintf(name, "HDF5 %ld %ldx1", nfiles, n);
 	print_stats(name, t, navg);
 
     for (int i = 0; i < navg; ++i) {
-         t[i] = mb/h5smalltestcombined(n*10, nfiles/10);
+         t[i] = h5smalltestcombined(n*10, nfiles/10);
     }
 	sprintf(name, "HDF5 %ld %ldx1", nfiles/10, n*10);
 	print_stats(name, t, navg);
 
     for (int i = 0; i < navg; ++i) {
-         t[i] = mb/h5bigtest(n, nfiles);
+         t[i] = h5bigtest(n, nfiles);
     }
 	sprintf(name, "HDF5 1 %ldx%ld", n, nfiles);
 	print_stats(name, t, navg);

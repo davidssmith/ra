@@ -1,4 +1,4 @@
 #!/bin/sh
 
-./timing 50
-./hdf5 50
+./timing 10
+./hdf5 10
