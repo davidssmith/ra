@@ -44,14 +44,14 @@ rasmalltest (size_t n, size_t nfiles)
 	begin = clock();
 	for (size_t i = 0; i < nfiles; ++i) {
 		sprintf(filename, "tmp/%ld.ra", i);
-		ra_write_all(r, filename);
+		ra_write(r, filename);
 	}
-	ra_free_all(r);
+	ra_free(r);
 	for (size_t i = 0; i < nfiles; ++i) {
 		sprintf(filename, "tmp/%ld.ra", i);
 		//puts(filename);
-		ra_read_all(r, filename);
-		ra_free_all(r);
+		ra_read(r, filename);
+		ra_free(r);
 	}
 	end = clock();
 	//printf("r.data[0] = %f\n", testval);
@@ -74,15 +74,15 @@ rabigtest (size_t n, size_t nfiles)
 	ra_t *r = ra_create("f4", 2, dims);
 	total_bytes = r->size;
 	begin = clock();
-	ra_write_all(r, "tmp/big.ra");
-	ra_free_all(r);
-	ra_read_all(r, "tmp/big.ra");
+	ra_write(r, "tmp/big.ra");
+	ra_free(r);
+	ra_read(r, "tmp/big.ra");
 	end = clock();
 	unlink("tmp/big.ra");
 	float t = (double)(end - begin) / (double)CLOCKS_PER_SEC;
 	float mb = total_bytes * 1e-6;
 	printf("RawArray 1 %ldx%ld file:        %6.1f ms, %6.1f MBps\n", n, nfiles, t*1000, mb/t);
-	ra_free_all(r);
+	ra_free(r);
 	free(r);
 }
 

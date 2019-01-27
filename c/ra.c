@@ -38,8 +38,6 @@
 
 // TODO: extend validation checks to internal consistency
 // TODO: compressed with LEB128?
-// TODO: ra_create  function
-
 
 
 // field offsets (bytes)
@@ -53,7 +51,7 @@
 
 
 static int
-validate (const ra_t * restrict a)
+check_magic_and_flags (const ra_t * restrict a)
 {
     if (a->magic != RA_MAGIC_NUMBER)
         err(EX_DATAERR, "Invalid magic: %lu\n", a->magic);
@@ -157,9 +155,10 @@ ra_read_header(ra_t *a, const char *path)
 {
     int fd = valid_open(path, O_RDONLY);
     valid_read(fd, a, 6*sizeof(uint64_t));
-    validate(a);
+    check_magic_and_flags(a);
     a->dims = (uint64_t *) malloc(a->ndims * sizeof(uint64_t));
 	a->top = NULL;
+	a->data = NULL;
     valid_read(fd, a->dims, a->ndims * sizeof(uint64_t));
 	return fd;
 }
@@ -219,18 +218,6 @@ ra_dims(const char *path)
 }
 
 void
-ra_print_dims(const char *path)
-{
-    ra_t r;
-	ra_read_header(&r, path);
-    for (uint64_t i = 0; i < r.ndims; ++i)
-        printf("%lu ", r.dims[i]);
-    printf("\n");
-	ra_free(&r);
-}
-
-
-void
 ra_parse_type(const char *typestr, uint64_t *eltype, uint64_t *elbyte)
 {
 	switch(typestr[0]) {
@@ -278,24 +265,8 @@ ra_create(const char *type, const uint64_t ndims,
 
 }
 
-
 int
 ra_read(ra_t * a, const char *path)
-{
-    int fd = ra_read_header(a, path);
-    a->data = chunked_read(fd);
-    close(fd);
-    return 0;
-}
-
-inline uint64_t
-_u64(uint8_t* u)
-{
-	return *((uint64_t*)u);
-}
-
-int
-ra_read_all(ra_t * a, const char *path)
 {
     int fd = valid_open(path, O_RDONLY);
 	a->top = chunked_read(fd);
@@ -308,18 +279,6 @@ ra_read_all(ra_t * a, const char *path)
 
 int
 ra_write(const ra_t * restrict a, const char *path)
-{
-    int fd;
-    fd = valid_open(path, O_WRONLY | O_TRUNC | O_CREAT); //0644
-    valid_write(fd, a, 6*sizeof(uint64_t));
-    valid_write(fd, a->dims, a->ndims * sizeof(uint64_t));
-	chunked_write(fd, a->data, a->size);
-    close(fd);
-    return 0;
-}
-
-int
-ra_write_all(const ra_t * restrict a, const char *path)
 {
     int fd;
     fd = valid_open(path, O_WRONLY | O_TRUNC | O_CREAT); //0644
@@ -340,13 +299,6 @@ ra_write_all(const ra_t * restrict a, const char *path)
 
 void
 ra_free(ra_t * a)
-{
-    free(a->dims);
-    free(a->data);
-}
-
-void
-ra_free_all(ra_t * a)
 {
 	if (a->top == NULL) {
 		free(a->dims);

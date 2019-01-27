@@ -27,13 +27,23 @@
 #include <stdio.h>
 #include "ra.h"
 
+void
+ra_print_dims(const char *path)
+{
+	ra_t r;
+	ra_read_header(&r, path);
+	for (uint64_t i = 0; i < r.ndims; ++i)
+		printf("%lu ", r.dims[i]);
+	printf("\n");
+	ra_free(&r);
+}
+
 int
 main (int argc, char *argv[])
 {
-    if (argc > 1) {
-
+    if (argc > 1)
         ra_print_dims(argv[1]);
-    } else {
+    else {
         printf("Print dimensions of ra file.\n");
         printf("Usage: radims <file.ra>\n");
     }
