@@ -103,7 +103,7 @@ main(int argc, char *argv[])
 	}
 	snprintf(png_file, 256, "%s.png", argv[1]);
 	snprintf(ra_file, 256, "%s.ra", argv[1]);
-	const int navg =5, nimg = 50000;
+	const int navg =10, nimg = 50000;
 	uint64_t *t = (uint64_t*)malloc(navg*sizeof(uint64_t));
 	size_t total_rowbytes = 0;
 	for (int i = 0; i < navg; ++i) {
@@ -114,7 +114,7 @@ main(int argc, char *argv[])
     	gettimeofday(&end,NULL);
     	t[i] = time_usec(&end) - time_usec(&begin);
 	}
-	print_stats("PNG", t, navg);
+	print_stats(png_file, t, navg);
 	//printf("%s, PNG, %6.2f us/img, %lu bytes, %6.2f ns/MB\n", argv[1], t, total_rowbytes, 1e9*t/total_rowbytes);
 	ra_t r;
 	total_rowbytes = 0;
@@ -128,7 +128,7 @@ main(int argc, char *argv[])
     	gettimeofday(&end,NULL);
     	t[i] = time_usec(&end) - time_usec(&begin);
 	}
-	print_stats("RawArray", t, navg);
+	print_stats(ra_file, t, navg);
 	//printf("%s, RawArray, %6.2f us/img, %lu bytes, %6.2f ns/MB\n", argv[1], t, total_rowbytes, 1e9*t/total_rowbytes);
 	return 0;
 }
