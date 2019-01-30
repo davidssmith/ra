@@ -272,6 +272,11 @@ ra_create(const char *type, const uint64_t ndims,
 	for (uint64_t i = 0; i < ndims; ++i)
 		r->size *= dims[i];
 	r->top = (uint8_t*) calloc(ra_file_size(r),1);
+	*((uint64_t*)(r->top)) = r->magic;
+	*((uint64_t*)(r->top + ELTYPE_OFFSET)) = r->eltype;
+	*((uint64_t*)(r->top + ELBYTE_OFFSET)) = r->elbyte;
+	*((uint64_t*)(r->top + SIZE_OFFSET)) =  r->size;
+	*((uint64_t*)(r->top + NDIMS_OFFSET)) =  r->ndims;
 	r->dims = (uint64_t*)(r->top + DIMS_OFFSET);
 	for (int i = 0; i < ndims; ++i)
 		r->dims[i] = dims[i];

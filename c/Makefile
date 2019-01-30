@@ -45,6 +45,8 @@ timing: $(objects) timing.o
 	$(CC) $(objects) timing.o -o timing $(LFLAGS)
 h5time: hdf5.o
 	h5cc -O2 hdf5.c -o h5time
+pngtime: pngtime.o ra.o
+	$(CC) -O2 pngtime.c ra.c -o pngtime $(LFLAGS) -lpng
 ra2cfl: $(objects)  ra2cfl.o
 	$(CC) $(objects) ra2cfl.o -o ra2cfl $(LFLAGS)
 cfl2ra: $(objects)  cfl2ra.o

@@ -95,6 +95,6 @@ int main(int argc, char *argv[])
 	for (int i = 0; i < nreps; ++i)
 		total_rowbytes += png_read(png_file);
 
-	printf("read %lu total row bytes\n", total_rowbytes);
+	printf("read %lu total bytes\n", total_rowbytes);
 	return 0;
 }
