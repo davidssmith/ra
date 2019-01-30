@@ -63,6 +63,15 @@ check_magic_and_flags (const ra_t * restrict a)
     return 1;
 }
 
+void
+print_magic (const ra_t *r)
+{
+	char *s = (char*)&r->magic;
+	for (int i = 0; i < 8; ++i)
+		printf("%c", s[i]);
+	printf("\n");
+}
+
 static size_t
 valid_read(int fd, void *buf, const size_t count)
 {
@@ -100,7 +109,7 @@ valid_open(const char *path, const int perms)
 }
 
 static size_t
-ra_file_size(int fd)
+ra_ondisk_size(int fd)
 {
 	size_t cur = lseek(fd, 0, SEEK_CUR);
 	size_t size = lseek(fd, 0, SEEK_END) - cur; 
@@ -111,16 +120,22 @@ ra_file_size(int fd)
 	//return st.st_size;
 }
 
-static size_t
-ra_header_size(ra_t *r)
+inline static size_t
+ra_header_size(const ra_t * restrict r)
 {
 	return DIMS_OFFSET + sizeof(uint64_t)*r->ndims;
+}
+
+inline static size_t
+ra_file_size(const ra_t * restrict r)
+{
+	return DIMS_OFFSET + sizeof(uint64_t)*r->ndims + r->size;
 }
 
 static uint8_t *
 chunked_read(int fd)
 {
-	size_t size = ra_file_size(fd);
+	size_t size = ra_ondisk_size(fd);
 	uint8_t *data = safe_malloc(size);
     size_t bytesleft = size;
     uint8_t *cursor = data;
@@ -154,7 +169,7 @@ int
 ra_read_header(ra_t *a, const char *path)
 {
     int fd = valid_open(path, O_RDONLY);
-    valid_read(fd, a, 6*sizeof(uint64_t));
+    valid_read(fd, a, DIMS_OFFSET);
     check_magic_and_flags(a);
     a->dims = (uint64_t *) malloc(a->ndims * sizeof(uint64_t));
 	a->top = NULL;
@@ -250,13 +265,13 @@ ra_create(const char *type, const uint64_t ndims,
 		const uint64_t dims[])
 {
 	ra_t *r = malloc(sizeof(ra_t));
+	r->magic = RA_MAGIC_NUMBER;
 	ra_parse_type(type, &(r->eltype), &r->elbyte);
 	r->ndims = ndims;
 	r->size = r->elbyte;
 	for (uint64_t i = 0; i < ndims; ++i)
 		r->size *= dims[i];
-	r->filesize = r->size + ra_header_size(r);
-	r->top = (uint8_t*) calloc(r->filesize,1);
+	r->top = (uint8_t*) calloc(ra_file_size(r),1);
 	r->dims = (uint64_t*)(r->top + DIMS_OFFSET);
 	for (int i = 0; i < ndims; ++i)
 		r->dims[i] = dims[i];
@@ -271,7 +286,7 @@ ra_read(ra_t * a, const char *path)
     int fd = valid_open(path, O_RDONLY);
 	a->top = chunked_read(fd);
 	close(fd);
-	memcpy(a, a->top, DIMS_OFFSET); // fixed part of header
+	memcpy(a, a->top, DIMS_OFFSET); // fixed part of struct
 	a->dims = (uint64_t*)(a->top + DIMS_OFFSET);
 	a->data = a->top + DIMS_OFFSET + sizeof(uint64_t)*a->ndims;
     return 0;
@@ -282,17 +297,14 @@ ra_write(const ra_t * restrict a, const char *path)
 {
     int fd;
     fd = valid_open(path, O_WRONLY | O_TRUNC | O_CREAT); //0644
-	if (a->top == NULL) 
+	if (a->top == NULL) // don't have a single malloc-ed space for the raw array
 	{
-		valid_write(fd, a, 6*sizeof(uint64_t));
+		valid_write(fd, a, DIMS_OFFSET);  // write in parts
 		valid_write(fd, a->dims, a->ndims * sizeof(uint64_t));
 		chunked_write(fd, a->data, a->size);
 	}
 	else
-	{
-		size_t size = a->size + DIMS_OFFSET + sizeof(uint64_t)*a->ndims;
-		chunked_write(fd, a->top, size);
-	}
+		chunked_write(fd, a->top, ra_file_size(a));  // can write all at once
     close(fd);
     return 0;
 }

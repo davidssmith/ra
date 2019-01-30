@@ -258,6 +258,7 @@ main (int argc, char *argv[])
 	sprintf(name, "HDF5 1 %ldx%ld", n, nfiles);
 	print_stats(name, t, navg);
 
+	free(t);
     return 0;
 }
 
