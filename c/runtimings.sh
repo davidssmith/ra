@@ -3,6 +3,6 @@
 ./timing 10
 ./hdf5 10
 
-./pngtiming eight
-./pngtiming airplane
+./pngtiming ../data/mnist_eight
+./pngtiming ../data/cifar_airplane
 
