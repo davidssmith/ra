@@ -54,6 +54,7 @@ static const uint64_t RA_MAGIC_NUMBER = 0x7961727261776172ULL;
 
 /* flags */
 #define NFLAGS              2
+#define RA_DEFAULT          0
 #define RA_FLAG_BIG_ENDIAN  (1ULL<<0)
 #define RA_FLAG_COMPRESSED  (1ULL<<1)
 #define RA_UNKNOWN_FLAGS    (-(1LL<<NFLAGS))
@@ -84,13 +85,17 @@ extern "C" {
 
 
 // Basic functions
-ra_t * ra_create(const char *type, const uint64_t ndims, const uint64_t dims[]);
+ra_t * ra_create(const char *type, const uint64_t ndims, const uint64_t dims[], const uint64_t flags);
 int ra_read(ra_t * a, const char *path);
 int ra_write(const ra_t * restrict a, const char *path);
+int ra_copy(ra_t* dst, const ra_t* src);
 void ra_free(ra_t * a);
 void print_magic(const ra_t *r);
+ra_t * ra_decompress(ra_t *r);
+ra_t * ra_compress(ra_t *r);
 
 int ra_read_header(ra_t *a, const char *path);
+void ra_peek(const ra_t *a);
 void ra_print_header(const char *path);
 uint64_t ra_flags(const char *path);
 uint64_t ra_eltype(const char *path);

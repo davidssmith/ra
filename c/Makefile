@@ -35,7 +35,7 @@ CC=cc -std=c99
 CFLAGS=-O2 -Wall
 LFLAGS= -lm
 
-objects = ra.o
+objects = ra.o lz4.o
 
 all: ra2cfl cfl2ra rahead radiff radims rareshape test timing
 

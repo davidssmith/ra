@@ -34,6 +34,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "lz4.h"
 #include "ra.h"
 
 // TODO: extend validation checks to internal consistency
@@ -49,6 +50,16 @@
 #define NDIMS_OFFSET  40
 #define DIMS_OFFSET   48
 
+static char endianchar[] = {'l', 'b'};
+
+/* flag booleans */
+inline static int is_compressed(ra_t *r) { return r->flags & RA_FLAG_COMPRESSED; }
+inline static int is_big_endian(ra_t *r) { return r->flags & RA_FLAG_BIG_ENDIAN; }
+
+
+//
+// VALIDATION FUNCTIONS
+//
 
 static int
 check_magic_and_flags (const ra_t * restrict a)
@@ -99,6 +110,15 @@ safe_malloc(const size_t size)
 	return data;
 }
 
+static void *
+safe_realloc(void *ptr, const size_t size)
+{
+  	void *data = realloc(ptr, size);
+	if (data == NULL)
+		err(EX_OSERR, "unable to allocate memory for data");
+	return data;
+}
+
 static int
 valid_open(const char *path, const int perms)
 {
@@ -107,6 +127,11 @@ valid_open(const char *path, const int perms)
         err(EX_CANTCREAT, "unable to open %s", path);
     return fd;
 }
+
+
+//
+// SIMPLE QUERIES
+//
 
 static size_t
 ra_ondisk_size(int fd)
@@ -131,6 +156,20 @@ ra_file_size(const ra_t * restrict r)
 {
 	return DIMS_OFFSET + sizeof(uint64_t)*r->ndims + r->size;
 }
+
+inline static uint64_t
+ra_data_size(const ra_t *restrict r)
+{  /* return size of data region based on dimensions and elbyte */
+	uint64_t size = r->elbyte;
+	for (uint64_t d = 0; d < r->ndims; ++d)
+		size *= r->dims[d];
+	return size;
+}
+
+
+// 
+// WRAPPED IO FUNCTIONS
+//
 
 static uint8_t *
 chunked_read(int fd)
@@ -179,23 +218,33 @@ ra_read_header(ra_t *a, const char *path)
 }
 
 void
-ra_print_header(const char *path)
+ra_peek(const ra_t *a)
+{
+    //ra_t a;
+	//int fd = ra_read_header(&a, path);
+	//close(fd);
+    printf("%c%lu", RA_TYPE_CODES[a->eltype], a->elbyte * 8);
+	printf("%s,", a->flags & RA_FLAG_COMPRESSED ? "z" : "");
+    printf("%ce,", endianchar[a->flags & RA_FLAG_BIG_ENDIAN]);
+    printf("t%lu,", a->eltype);
+    printf("b%lu,", a->elbyte);
+    printf("n%lu,", a->size);
+    printf("d%lu,", a->ndims);
+    printf("shape=[");
+    for (int j = 0; j < a->ndims - 1; ++j)
+        printf("%lu,", a->dims[j]);
+    printf("%lu]\n", a->dims[a->ndims - 1]);
+}
+
+void
+ra_print_header(const char * path)
 {
     ra_t a;
 	int fd = ra_read_header(&a, path);
+	printf("%s: ", path);
+	ra_peek(&a);
 	close(fd);
-    printf("[%s]\n", path);
-    printf("endian = %s\n", a.flags & RA_FLAG_BIG_ENDIAN ? "big" : "little");
-    printf("type = %c%lu\n", RA_TYPE_CODES[a.eltype], a.elbyte * 8);
-    printf("eltype = %lu\n", a.eltype);
-    printf("elbyte = %lu\n", a.elbyte);
-    printf("size = %lu\n", a.size);
-    printf("dimension = %lu\n", a.ndims);
-    printf("shape = [");
-    for (int j = 0; j < a.ndims - 1; ++j)
-        printf("%lu,", a.dims[j]);
-    printf("%lu]\n\n", a.dims[a.ndims - 1]);
-	free(a.dims);
+	ra_free(&a);
 }
 
 uint64_t
@@ -262,10 +311,11 @@ ra_parse_type(const char *typestr, uint64_t *eltype, uint64_t *elbyte)
 
 ra_t *
 ra_create(const char *type, const uint64_t ndims,
-		const uint64_t dims[])
+		const uint64_t dims[], const uint64_t flags)
 {
 	ra_t *r = malloc(sizeof(ra_t));
 	r->magic = RA_MAGIC_NUMBER;
+	r->flags = flags;
 	ra_parse_type(type, &(r->eltype), &r->elbyte);
 	r->ndims = ndims;
 	r->size = r->elbyte;
@@ -286,7 +336,7 @@ ra_create(const char *type, const uint64_t ndims,
 }
 
 int
-ra_read(ra_t * a, const char *path)
+ra_read(ra_t *a, const char *path)
 {
     int fd = valid_open(path, O_RDONLY);
 	a->top = chunked_read(fd);
@@ -302,16 +352,77 @@ ra_write(const ra_t * restrict a, const char *path)
 {
     int fd;
     fd = valid_open(path, O_WRONLY | O_TRUNC | O_CREAT); //0644
-	if (a->top == NULL) // don't have a single malloc-ed space for the raw array
-	{
+	//if (a->top == NULL) // don't have a single malloc-ed space for the raw array
+	//{
 		valid_write(fd, a, DIMS_OFFSET);  // write in parts
 		valid_write(fd, a->dims, a->ndims * sizeof(uint64_t));
 		chunked_write(fd, a->data, a->size);
-	}
-	else
-		chunked_write(fd, a->top, ra_file_size(a));  // can write all at once
+	//}
+	//else // BROKEN
+	//	chunked_write(fd, a->top, ra_file_size(a));  // can write all at once
     close(fd);
     return 0;
+}
+
+
+int
+ra_copy (ra_t *dst, const ra_t *src)
+{
+	memcpy(dst, src, DIMS_OFFSET);
+	memcpy(dst->dims, src->dims, src->ndims*sizeof(uint64_t));
+	memcpy(dst->data, src->data, src->size);
+	return 0;
+}
+
+ra_t *
+ra_compress(ra_t *r)
+{
+	if (is_compressed(r))  // already compressed
+		return r;
+	size_t maxoutsize = LZ4_compressBound(r->size);
+	//printf("Uncompressed size: %lu\n", r->size);
+	//printf("INferred maxoutsize: %lu\n", maxoutsize);
+	char *compressed_data = safe_malloc(maxoutsize);
+	size_t outsize = LZ4_compress_default((char*)r->data, compressed_data, r->size, maxoutsize);
+	//printf("Actual outsize: %lu\n", outsize);
+	if (outsize <= 0)
+		err(EX_DATAERR, "LZ4 compression failed, size=%lu", r->size);
+	if (r->top == NULL) {
+		free(r->data);
+		r->data = (uint8_t*)compressed_data;
+	} else {
+		memcpy(r->data, compressed_data, outsize);
+		free(compressed_data);
+	}
+	r->flags |= RA_FLAG_COMPRESSED;
+	r->size = outsize;
+	return r;
+}
+
+
+ra_t *
+ra_decompress(ra_t *r)
+{
+	if (!is_compressed(r)) // only do if compressed
+		return r;
+	size_t orig_size = ra_data_size(r);
+	//printf("compressed_size: %lu\n", r->size);
+	//printf("orig_size: %lu\n", orig_size);
+	char *decompressed_data = safe_malloc(orig_size);
+	size_t decompressed_size = LZ4_decompress_safe((char*)r->data, decompressed_data, r->size, orig_size);
+	//printf("decompressed_size: %lu\n", decompressed_size);
+	if (decompressed_size <= 0 || decompressed_size != orig_size)
+		err(EX_DATAERR, "LZ4 decompression failed on data size %lu", r->size);
+	if (r->top == NULL) {
+		free(r->data);
+		r->data = (uint8_t*)decompressed_data;
+	} else {
+		r->top = safe_realloc(r->top, ra_header_size(r) + decompressed_size);
+		memcpy(r->data, decompressed_data, orig_size);
+	}
+	r->flags ^= RA_FLAG_COMPRESSED;  // turn off compression flag
+	r->size = orig_size;
+	return r;
 }
 
 void
