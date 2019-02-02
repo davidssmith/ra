@@ -58,9 +58,9 @@ ra: $(objects) main.o
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f *.o test ra2cfl cfl2ra ra timing
+	rm -f *.o test ra2cfl cfl2ra ra timing a.out hdf5 pngtime
 
-install: ra2cfl cfl2ra rahead radiff radims rareshape
+install: ra2cfl cfl2ra ra
 	install -m 0755 ra2cfl $(PREFIX)/bin
 	install -m 0755 cfl2ra $(PREFIX)/bin
 	install -m 0755 ra $(PREFIX)/bin
