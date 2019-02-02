@@ -37,7 +37,7 @@ LFLAGS= -lm
 
 objects = ra.o lz4.o
 
-all: ra2cfl cfl2ra rahead radiff radims rareshape test timing
+all: ra2cfl cfl2ra ra test timing
 
 test: $(objects) test.o
 	$(CC) $(objects) test.o -o test $(LFLAGS)
@@ -51,26 +51,17 @@ ra2cfl: $(objects)  ra2cfl.o
 	$(CC) $(objects) ra2cfl.o -o ra2cfl $(LFLAGS)
 cfl2ra: $(objects)  cfl2ra.o
 	$(CC) $(objects) cfl2ra.o -o cfl2ra $(LFLAGS)
-rahead: $(objects) rahead.o
-	$(CC) $(objects) rahead.o -o rahead $(LFLAGS)
-radiff: $(objects) radiff.o
-	$(CC) $(objects) radiff.o -o radiff $(LFLAGS)
-radims: $(objects) radims.o
-	$(CC) $(objects) radims.o -o radims $(LFLAGS)
-rareshape: $(objects) rareshape.o
-	$(CC) $(objects) rareshape.o -o rareshape $(LFLAGS)
+ra: $(objects) main.o
+	$(CC) $(objects) main.o -o ra $(LFLAGS)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f *.o test ra2cfl cfl2ra rahead radiff radims rareshape timing
+	rm -f *.o test ra2cfl cfl2ra ra timing
 
 install: ra2cfl cfl2ra rahead radiff radims rareshape
 	install -m 0755 ra2cfl $(PREFIX)/bin
 	install -m 0755 cfl2ra $(PREFIX)/bin
-	install -m 0755 rahead $(PREFIX)/bin
-	install -m 0755 radiff $(PREFIX)/bin
-	install -m 0755 radims $(PREFIX)/bin
-	install -m 0755 rareshape $(PREFIX)/bin
+	install -m 0755 ra $(PREFIX)/bin
 
