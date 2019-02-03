@@ -210,7 +210,6 @@ decompress (int argc, char *argv[])
 	return EX_OK;
 }
 
-
 void
 print_usage()
 {

@@ -33,6 +33,7 @@ test_compress()
 {
     const char *testfile1 = "../data/cifar_airplane.ra";
     const char *testfile2 = "test.ra";
+    const char *testfile3 = "test2.ra";
 
     ra_t r, r2, r3;
     ra_read(&r, testfile1);
@@ -45,9 +46,10 @@ test_compress()
     ra_read(&r2, testfile2);
     ra_peek(&r2);
 	ra_decompress(&r2);
+	ra_write(&r2, testfile3);
 
 	assert(ra_diff(&r3, &r2, 0) == 0);
-    printf("\nRead/Write TEST PASSED\n");
+    printf("\nCompress TEST PASSED\n");
 	ra_free(&r);
 	ra_free(&r2);
 

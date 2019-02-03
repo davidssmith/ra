@@ -32,7 +32,7 @@ endif
 
 
 CC=cc -std=c99
-CFLAGS=-O2 -Wall
+CFLAGS=-O2 -Wall -g
 LFLAGS= -lm
 
 objects = ra.o lz4.o

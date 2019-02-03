@@ -368,9 +368,14 @@ ra_write(const ra_t * restrict a, const char *path)
 int
 ra_copy (ra_t *dst, const ra_t *src)
 {
-	memcpy(dst, src, DIMS_OFFSET);
-	memcpy(dst->dims, src->dims, src->ndims*sizeof(uint64_t));
-	memcpy(dst->data, src->data, src->size);
+	if (src->top == NULL) {
+		memcpy(dst, src, DIMS_OFFSET);
+		memcpy(dst->dims, src->dims, src->ndims*sizeof(uint64_t));
+		memcpy(dst->data, src->data, src->size);
+	} else {
+		memcpy(dst, src, DIMS_OFFSET);
+		memcpy(dst->top, src->top, ra_file_size(src));
+	}
 	return 0;
 }
 
@@ -406,11 +411,11 @@ ra_decompress(ra_t *r)
 	if (!is_compressed(r)) // only do if compressed
 		return r;
 	size_t orig_size = ra_data_size(r);
-	//printf("compressed_size: %lu\n", r->size);
-	//printf("orig_size: %lu\n", orig_size);
+	printf("compressed_size: %lu\n", r->size);
+	printf("orig_size: %lu\n", orig_size);
 	char *decompressed_data = safe_malloc(orig_size);
 	size_t decompressed_size = LZ4_decompress_safe((char*)r->data, decompressed_data, r->size, orig_size);
-	//printf("decompressed_size: %lu\n", decompressed_size);
+	printf("decompressed_size: %lu\n", decompressed_size);
 	if (decompressed_size <= 0 || decompressed_size != orig_size)
 		err(EX_DATAERR, "LZ4 decompression failed on data size %lu", r->size);
 	if (r->top == NULL) {
