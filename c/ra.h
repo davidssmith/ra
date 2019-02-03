@@ -28,7 +28,7 @@
 */
 
 #include <stdint.h>
-
+#include "lz4.h"
 
 /*
    File layout
