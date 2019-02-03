@@ -422,16 +422,17 @@ ra_decompress(ra_t *r)
 	if (decompressed_size <= 0 || decompressed_size != orig_size)
 		err(EX_DATAERR, "LZ4 decompression failed on data size %lu", r->size);
 	if (r->top == NULL) {
+		printf("non-unified!\n");
 		free(r->data);
 		r->data = (uint8_t*)decompressed_data;
 	} else {
-		uint8_t *new_top = safe_malloc(ra_header_size(r) + decompressed_size);
-		memcpy(new_top, r->top, ra_header_size(r));
+		printf("unified!\n");
+		// for most cases, fastest is to redo dims and de-unify
+		r->dims = safe_malloc(r->ndims*sizeof(uint64_t));
+		memcpy(r->dims, r->top + DIMS_OFFSET, r->ndims*sizeof(uint64_t));
+		r->data = (uint8_t*)decompressed_data;
 		free(r->top);
-		r->top = new_top;
-		r->dims = (uint64_t*)(r->top  + DIMS_OFFSET);
-		r->data = r->top + DIMS_OFFSET + r->ndims*sizeof(uint64_t);
-		memcpy(r->data, decompressed_data, orig_size);
+		r->top = NULL;
 	}
 	r->flags ^= RA_FLAG_COMPRESSED;  // turn off compression flag
 	r->size = orig_size;

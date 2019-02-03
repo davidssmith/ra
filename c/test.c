@@ -35,25 +35,30 @@ test_compress()
     const char *testfile2 = "test.ra";
     const char *testfile3 = "test2.ra";
 
-    ra_t r, r2, r3;
+    ra_t r, r2, rorig;
     ra_read(&r, testfile1);
-	ra_copy(&r3, &r);
-	ra_compress(&r);
-	ra_peek(&r);
+    ra_read(&rorig, testfile1);
+	printf("r: "); ra_peek(&r);
+	printf("rz: "); ra_peek(&r);
     ra_write(&r, testfile2);
     ra_read(&r2, testfile2);
+	printf("r2z: "); ra_peek(&r2);
 	ra_decompress(&r2);
+	printf("r2: "); ra_peek(&r2);
 	ra_write(&r2, testfile3);
 
     ra_print_header(testfile1);
     ra_print_header(testfile2);
     ra_print_header(testfile3);
 
-	assert(ra_diff(&r3, &r2, 0) == 0);
+	printf("rorig: "); ra_peek(&rorig);
+	int diff = ra_diff(&rorig, &r2, 0);
+	printf("diff code: %d\n", diff);
+	assert (diff == 0);
     printf("Compress TEST PASSED\n");
 	ra_free(&r);
 	ra_free(&r2);
-	ra_free(&r3);
+	ra_free(&rorig);
 
     return 0;
 }
