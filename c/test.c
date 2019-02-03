@@ -38,22 +38,18 @@ test_compress()
     ra_t r, r2, rorig;
     ra_read(&r, testfile1);
     ra_read(&rorig, testfile1);
-	printf("r: "); ra_peek(&r);
-	printf("rz: "); ra_peek(&r);
+	ra_decompress(&r);
     ra_write(&r, testfile2);
     ra_read(&r2, testfile2);
-	printf("r2z: "); ra_peek(&r2);
-	ra_decompress(&r2);
-	printf("r2: "); ra_peek(&r2);
+	ra_compress(&r2);
 	ra_write(&r2, testfile3);
 
     ra_print_header(testfile1);
     ra_print_header(testfile2);
     ra_print_header(testfile3);
 
-	printf("rorig: "); ra_peek(&rorig);
 	int diff = ra_diff(&rorig, &r2, 0);
-	printf("diff code: %d\n", diff);
+	//printf("diff code: %d\n", diff);
 	assert (diff == 0);
     printf("Compress TEST PASSED\n");
 	ra_free(&r);

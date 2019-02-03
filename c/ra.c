@@ -414,19 +414,17 @@ ra_decompress(ra_t *r)
 	if (!is_compressed(r)) // only do if compressed
 		return r;
 	size_t orig_size = ra_data_size(r);
-	printf("compressed_size: %lu\n", r->size);
-	printf("orig_size: %lu\n", orig_size);
+	//printf("compressed_size: %lu\n", r->size);
+	//printf("orig_size: %lu\n", orig_size);
 	char *decompressed_data = safe_malloc(orig_size);
 	size_t decompressed_size = LZ4_decompress_safe((char*)r->data, decompressed_data, r->size, orig_size);
-	printf("decompressed_size: %lu\n", decompressed_size);
+	//printf("decompressed_size: %lu\n", decompressed_size);
 	if (decompressed_size <= 0 || decompressed_size != orig_size)
 		err(EX_DATAERR, "LZ4 decompression failed on data size %lu", r->size);
 	if (r->top == NULL) {
-		printf("non-unified!\n");
 		free(r->data);
 		r->data = (uint8_t*)decompressed_data;
 	} else {
-		printf("unified!\n");
 		// for most cases, fastest is to redo dims and de-unify
 		r->dims = safe_malloc(r->ndims*sizeof(uint64_t));
 		memcpy(r->dims, r->top + DIMS_OFFSET, r->ndims*sizeof(uint64_t));
