@@ -21,7 +21,7 @@ test_rw()
     ra_read(&r2, testfile2);
 
 	assert(ra_diff(&r, &r2, 0) == 0);
-    printf("\nRead/Write TEST PASSED\n");
+    printf("Read/Write TEST PASSED\n");
 	ra_free(&r);
 	ra_free(&r2);
 
@@ -39,19 +39,21 @@ test_compress()
     ra_read(&r, testfile1);
 	ra_copy(&r3, &r);
 	ra_compress(&r);
+	ra_peek(&r);
     ra_write(&r, testfile2);
-    ra_print_header(testfile1);
-    ra_print_header(testfile2);
-
     ra_read(&r2, testfile2);
-    ra_peek(&r2);
 	ra_decompress(&r2);
 	ra_write(&r2, testfile3);
 
+    ra_print_header(testfile1);
+    ra_print_header(testfile2);
+    ra_print_header(testfile3);
+
 	assert(ra_diff(&r3, &r2, 0) == 0);
-    printf("\nCompress TEST PASSED\n");
+    printf("Compress TEST PASSED\n");
 	ra_free(&r);
 	ra_free(&r2);
+	ra_free(&r3);
 
     return 0;
 }
@@ -60,7 +62,6 @@ test_compress()
 int
 main ()
 {
-
 	test_rw();
 	test_compress();
 	return 0;

@@ -110,14 +110,19 @@ safe_malloc(const size_t size)
 	return data;
 }
 
-static void *
-safe_realloc(void *ptr, const size_t size)
+static void
+refresh_mem_from_struct(ra_t *r)
 {
-  	void *data = realloc(ptr, size);
-	if (data == NULL)
-		err(EX_OSERR, "unable to allocate memory for data");
-	return data;
+	if (r->top != NULL) {  // only do if using unified mem
+		*((uint64_t*)(r->top)) = r->magic;
+		*((uint64_t*)(r->top + FLAGS_OFFSET)) = r->flags;
+		*((uint64_t*)(r->top + ELTYPE_OFFSET)) = r->eltype;
+		*((uint64_t*)(r->top + ELBYTE_OFFSET)) = r->elbyte;
+		*((uint64_t*)(r->top + SIZE_OFFSET)) =  r->size;
+		*((uint64_t*)(r->top + NDIMS_OFFSET)) =  r->ndims;
+	}
 }
+
 
 static int
 valid_open(const char *path, const int perms)
@@ -287,27 +292,25 @@ void
 ra_parse_type(const char *typestr, uint64_t *eltype, uint64_t *elbyte)
 {
 	switch(typestr[0]) {
-		case 's':
-			*eltype = RA_TYPE_USER;
-			break;
-		case 'i':
-			*eltype = RA_TYPE_INT;
-			break;
-		case 'u':
-			*eltype = RA_TYPE_UINT;
-			break;
-		case 'f':
-			*eltype = RA_TYPE_FLOAT;
-			break;
-		case 'c':
-			*eltype = RA_TYPE_COMPLEX;
-			break;
-		default:
-			err(EX_USAGE, "Unknown type code %c", typestr[0]);
+	case 's':
+		*eltype = RA_TYPE_USER;
+		break;
+	case 'i':
+		*eltype = RA_TYPE_INT;
+		break;
+	case 'u':
+		*eltype = RA_TYPE_UINT;
+		break;
+	case 'f':
+		*eltype = RA_TYPE_FLOAT;
+		break;
+	case 'c':
+		*eltype = RA_TYPE_COMPLEX;
+		break;
+	default:
+		err(EX_USAGE, "Unknown type code %c", typestr[0]);
 	}
 	*elbyte = atoi(typestr+1);
-
-
 }
 
 
@@ -323,18 +326,13 @@ ra_create(const char *type, const uint64_t ndims,
 	r->size = r->elbyte;
 	for (uint64_t i = 0; i < ndims; ++i)
 		r->size *= dims[i];
-	r->top = (uint8_t*) calloc(ra_file_size(r),1);
-	*((uint64_t*)(r->top)) = r->magic;
-	*((uint64_t*)(r->top + ELTYPE_OFFSET)) = r->eltype;
-	*((uint64_t*)(r->top + ELBYTE_OFFSET)) = r->elbyte;
-	*((uint64_t*)(r->top + SIZE_OFFSET)) =  r->size;
-	*((uint64_t*)(r->top + NDIMS_OFFSET)) =  r->ndims;
+	r->top = (uint8_t*) malloc(ra_file_size(r));
+	refresh_mem_from_struct(r);
 	r->dims = (uint64_t*)(r->top + DIMS_OFFSET);
 	for (int i = 0; i < ndims; ++i)
 		r->dims[i] = dims[i];
 	r->data = (uint8_t*)(r->top +  ra_header_size(r));
 	return r;
-
 }
 
 int
@@ -350,32 +348,35 @@ ra_read(ra_t *a, const char *path)
 }
 
 int
-ra_write(const ra_t * restrict a, const char *path)
+ra_write(ra_t *a, const char *path)
 {
     int fd;
     fd = valid_open(path, O_WRONLY | O_TRUNC | O_CREAT); //0644
-	//if (a->top == NULL) // don't have a single malloc-ed space for the raw array
-	//{
+	if (a->top == NULL) // don't have a single malloc-ed space for the raw array
+	{
 		valid_write(fd, a, DIMS_OFFSET);  // write in parts
 		valid_write(fd, a->dims, a->ndims * sizeof(uint64_t));
 		chunked_write(fd, a->data, a->size);
-	//}
-	//else // BROKEN
-	//	chunked_write(fd, a->top, ra_file_size(a));  // can write all at once
+	}
+	else 
+	{
+		refresh_mem_from_struct(a);  // make sure malloc memory contains updated struct vars
+		chunked_write(fd, a->top, ra_file_size(a));  // can write all at once
+	}
     close(fd);
     return 0;
 }
 
 
 int
-ra_copy (ra_t *dst, const ra_t *src)
+ra_copy (ra_t *dst, ra_t *src)
 {
 	if (src->top == NULL) {
 		memcpy(dst, src, DIMS_OFFSET);
 		memcpy(dst->dims, src->dims, src->ndims*sizeof(uint64_t));
 		memcpy(dst->data, src->data, src->size);
 	} else {
-		memcpy(dst, src, DIMS_OFFSET);
+		refresh_mem_from_struct(src);
 		memcpy(dst->top, src->top, ra_file_size(src));
 	}
 	return 0;
@@ -424,11 +425,17 @@ ra_decompress(ra_t *r)
 		free(r->data);
 		r->data = (uint8_t*)decompressed_data;
 	} else {
-		r->top = safe_realloc(r->top, ra_header_size(r) + decompressed_size);
+		uint8_t *new_top = safe_malloc(ra_header_size(r) + decompressed_size);
+		memcpy(new_top, r->top, ra_header_size(r));
+		free(r->top);
+		r->top = new_top;
+		r->dims = (uint64_t*)(r->top  + DIMS_OFFSET);
+		r->data = r->top + DIMS_OFFSET + r->ndims*sizeof(uint64_t);
 		memcpy(r->data, decompressed_data, orig_size);
 	}
 	r->flags ^= RA_FLAG_COMPRESSED;  // turn off compression flag
 	r->size = orig_size;
+	refresh_mem_from_struct(r);
 	return r;
 }
 

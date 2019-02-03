@@ -87,8 +87,8 @@ extern "C" {
 // Basic functions
 ra_t * ra_create(const char *type, const uint64_t ndims, const uint64_t dims[], const uint64_t flags);
 int ra_read(ra_t * a, const char *path);
-int ra_write(const ra_t * restrict a, const char *path);
-int ra_copy(ra_t* dst, const ra_t* src);
+int ra_write(ra_t *a, const char *path);
+int ra_copy(ra_t* dst, ra_t* src);
 void ra_free(ra_t * a);
 void print_magic(const ra_t *r);
 ra_t * ra_decompress(ra_t *r);
