@@ -228,19 +228,19 @@ ra_peek(const ra_t *a)
     //ra_t a;
 	//int fd = ra_read_header(&a, path);
 	//close(fd);
-	char typecode[6];
-	snprintf(typecode, 6, "%c%lu,", RA_TYPE_CODES[a->eltype], a->elbyte * 8);
-	printf("%5s ", typecode);
-	printf("%c, ", a->flags & RA_FLAG_COMPRESSED ? 'z' : ' ');
-    printf("%ce, ", endianchar[a->flags & RA_FLAG_BIG_ENDIAN]);
-    printf("t%lu, ", a->eltype);
-    printf("%2lu, ", a->elbyte);
-    printf("%12lu, ", a->size);
-    printf("%4lu, ", a->ndims);
-    printf("[");
+	char typecode[7];
+	snprintf(typecode, 7, "%c%lu%c", RA_TYPE_CODES[a->eltype], a->elbyte * 8,
+			a->flags & RA_FLAG_COMPRESSED ? 'z' : ' ');
+	printf("%6s ", typecode);
+    //printf("%ce, ", endianchar[a->flags & RA_FLAG_BIG_ENDIAN]);
+    //printf("t%lu, ", a->eltype);
+    //printf("%2lu, ", a->elbyte);
+    printf("%12lu  ", a->size);
+    //printf("%4lu, ", a->ndims);
+    printf("(");
     for (int j = 0; j < a->ndims - 1; ++j)
         printf("%lu, ", a->dims[j]);
-    printf("%lu]\n", a->dims[a->ndims - 1]);
+    printf("%lu)\n", a->dims[a->ndims - 1]);
 }
 
 void
@@ -248,7 +248,7 @@ ra_print_header(const char * path)
 {
     ra_t a;
 	int fd = ra_read_header(&a, path);
-	printf("%-30s: ", path);
+	printf("%-30s ", path);
 	ra_peek(&a);
 	close(fd);
 	ra_free(&a);

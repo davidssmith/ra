@@ -37,7 +37,7 @@ LFLAGS= -lm
 
 objects = ra.o lz4.o
 
-all: ra2cfl cfl2ra ra test timing
+all: ra2cfl cfl2ra ra test timing ra2png
 
 test: $(objects) test.o
 	$(CC) $(objects) test.o -o test $(LFLAGS)
@@ -47,6 +47,8 @@ h5time: hdf5.o lz4.o
 	h5cc -O2 hdf5.c -o h5time
 pngtime: pngtime.o ra.o lz4.o
 	$(CC) $(objects) -O2 pngtime.c -o pngtime $(LFLAGS) -lpng 
+ra2png: ra2png.o ra.o lz4.o
+	$(CC) $(objects) -O2 ra2png.c -o ra2png $(LFLAGS) -lpng 
 ra2cfl: $(objects)  ra2cfl.o
 	$(CC) $(objects) ra2cfl.o -o ra2cfl $(LFLAGS)
 cfl2ra: $(objects)  cfl2ra.o
@@ -60,8 +62,9 @@ ra: $(objects) main.o
 clean:
 	rm -f *.o test ra2cfl cfl2ra ra timing a.out hdf5 pngtime
 
-install: ra2cfl cfl2ra ra
+install: ra2cfl cfl2ra ra ra2png
 	install -m 0755 ra2cfl $(PREFIX)/bin
 	install -m 0755 cfl2ra $(PREFIX)/bin
+	install -m 0755 ra2png $(PREFIX)/bin
 	install -m 0755 ra $(PREFIX)/bin
 
