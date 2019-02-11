@@ -50,7 +50,7 @@
 #define NDIMS_OFFSET  40
 #define DIMS_OFFSET   48
 
-static char endianchar[] = {'l', 'b'};
+//static char endianchar[] = {'l', 'b'};
 
 /* flag booleans */
 inline static int is_compressed(ra_t *r) { return r->flags & RA_FLAG_COMPRESSED; }

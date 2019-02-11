@@ -29,7 +29,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "hdf5.h"
+#include <hdf5.h>
 
 uint64_t
 time_usec(const struct timeval *tv)

@@ -37,14 +37,14 @@ LFLAGS= -lm
 
 objects = ra.o lz4.o
 
-all: ra2cfl cfl2ra ra test timing ra2png
+all: ra2cfl cfl2ra ra test timing
 
 test: $(objects) test.o
 	$(CC) $(objects) test.o -o test $(LFLAGS)
 timing: $(objects) timing.o
 	$(CC) $(objects) timing.o -o timing $(LFLAGS)
 h5time: hdf5.o lz4.o
-	h5cc -O2 hdf5.c -o h5time
+	h5cc -O2 hdf5.c -o h5time -lhdf5
 pngtime: pngtime.o ra.o lz4.o
 	$(CC) $(objects) -O2 pngtime.c -o pngtime $(LFLAGS) -lpng 
 ra2png: ra2png.o ra.o lz4.o

@@ -199,7 +199,8 @@ main (int argc, char *argv[])
 		{
             pixel_t *pixel = pixel_at(&image, x, y);
 			//y*width + x
-			int pix = as_pix(r.data[x + y*image.width], 1.0f);
+			int pix = as_pix(*((float*)r.data+x + y*image.width), 1.0f);
+			printf("pix=%d\n", pix);
 			pixel->red = pix;
 			pixel->green = pix;
 			pixel->blue = pix;
