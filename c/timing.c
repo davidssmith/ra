@@ -46,7 +46,7 @@ rasmalltest (size_t n, size_t nfiles)
 	char filename[32];
 	uint64_t dims[] = {0};
 	dims[0] = n;
-	ra_t *r = ra_create("f4", 1, dims, RA_FLAG_COMPRESSED);
+	ra_t *r = ra_create("f4", 1, dims, RA_DEFAULT);
 	total_bytes = r->size * nfiles;
 	gettimeofday(&begin,NULL);
 	for (size_t i = 0; i < nfiles; ++i) {
@@ -79,7 +79,7 @@ rabigtest (size_t n, size_t nfiles)
 	uint64_t dims[] = {0, 0};
 	dims[0] = n;
 	dims[1] = nfiles;
-	ra_t *r = ra_create("f4", 2, dims, RA_FLAG_COMPRESSED);
+	ra_t *r = ra_create("f4", 2, dims, RA_DEFAULT);
 	total_bytes = r->size;
 	gettimeofday(&begin, NULL);
 	ra_write(r, "tmp/big.ra");
