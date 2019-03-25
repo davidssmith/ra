@@ -34,6 +34,7 @@ endif
 CC=cc -std=c99
 CFLAGS=-O2 -Wall -g
 LFLAGS= -lm
+H5FLAGS=-I/usr/include/hdf5/serial
 
 objects = ra.o lz4.o
 
@@ -43,8 +44,8 @@ test: $(objects) test.o
 	$(CC) $(objects) test.o -o test $(LFLAGS)
 timing: $(objects) timing.o
 	$(CC) $(objects) timing.o -o timing $(LFLAGS)
-h5time: hdf5.o lz4.o
-	h5cc -O2 hdf5.c -o h5time -lhdf5
+h5time: $(objects) h5time.c
+	h5cc -O2 h5time.c -o h5time -lhdf5 $(H5FLAGS)
 pngtime: pngtime.o ra.o lz4.o
 	$(CC) $(objects) -O2 pngtime.c -o pngtime $(LFLAGS) -lpng 
 ra2png: ra2png.o ra.o lz4.o

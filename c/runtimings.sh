@@ -1,8 +1,8 @@
 #!/bin/sh
 
 ./timing 10
-./hdf5 10
+./h5time 10
 
-./pngtiming ../data/mnist_eight
-./pngtiming ../data/cifar_airplane
+./pngtime ../data/mnist_eight
+./pngtime ../data/cifar_airplane
 

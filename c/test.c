@@ -7,7 +7,7 @@
 int
 test_rw()
 {
-    const char *testfile1 = "../data/cifar_airplane_z.ra";
+    const char *testfile1 = "../data/cifar_airplane.ra";
     const char *testfile2 = "test.ra";
 
     ra_t r;
