@@ -60,7 +60,10 @@ static const uint64_t RA_MAGIC_NUMBER = 0x7961727261776172ULL;
 #define RA_UNKNOWN_FLAGS    (-(1LL<<NFLAGS))
 
 /* maximum size that read system call can handle */
-#define RA_MAX_BYTES  (1ULL<<31)
+//#define RA_MAX_BYTES  (1ULL<<31)
+// max read chunk on Linux
+#define RA_MAX_BYTES  0x7ffff000ULL
+
 
 /* elemental types */
 typedef enum {

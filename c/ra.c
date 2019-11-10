@@ -50,6 +50,16 @@
 #define NDIMS_OFFSET  40
 #define DIMS_OFFSET   48
 
+enum diff_type {
+	DIFF_FLAGS = 0,
+	DIFF_ELTYPE,
+	DIFF_ELBYTE,
+	DIFF_SIZE,
+	DIFF_NDIMS,
+	DIFF_DIMS,
+	DIFF_DATA
+};
+
 //static char endianchar[] = {'l', 'b'};
 
 /* flag booleans */
@@ -470,18 +480,18 @@ int
 ra_diff(const ra_t * a, const ra_t * b, const int diff_type)
 {
     if (a->flags != b->flags)
-        return 1;
+        return DIFF_FLAGS;
     if (a->eltype != b->eltype)
-        return 2;
+        return DIFF_ELTYPE;
     if (a->elbyte != b->elbyte)
-        return 3;
+        return DIFF_ELBYTE;
     if (a->size != b->size)
-        return 4;
+        return DIFF_SIZE;
     if (a->ndims != b->ndims)
-        return 5;
+        return DIFF_NDIMS;
     for (size_t i = 0; i < a->ndims; ++i)
         if (a->dims[i] != b->dims[i])
-            return 6;
+            return DIFF_DIMS;
     if (diff_type == 0)
     {
         for (size_t i = 0; i < a->size; ++i)
@@ -490,7 +500,7 @@ ra_diff(const ra_t * a, const ra_t * b, const int diff_type)
             {
                 printf("differ at position %ld: lhs=%u rhs=%u\n", i,
                     a->data[i], b->data[i]);
-                return 7;
+                return DIFF_DATA;
             }
         }
     }
@@ -502,7 +512,7 @@ ra_diff(const ra_t * a, const ra_t * b, const int diff_type)
         norm = sqrtf(norm);
         printf("L1 distance: %g\n", norm);
         if (norm > 0.)
-            return 7;
+            return DIFF_DATA;
     }
     else if (diff_type == 2)
     {
@@ -515,7 +525,7 @@ ra_diff(const ra_t * a, const ra_t * b, const int diff_type)
         norm = sqrtf(norm);
         printf("L2 distance: %g\n", norm);
         if (norm > 0.)
-            return 7;
+            return DIFF_DATA;
     }
     else
         err(EX_USAGE, "Unknown diff_type %d\n", diff_type);
